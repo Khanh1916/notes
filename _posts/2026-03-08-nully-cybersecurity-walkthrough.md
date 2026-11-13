@@ -82,7 +82,7 @@ One host stands out at `192.168.1.46`, and its MAC address belongs to
 nmap -sC -sV 192.168.1.46 -v
 ```
 
-![nmap results showing five open ports](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image36.png)
+![nmap results showing five open ports]({{ '/images/nully-cybersecurity/01-nmap.png' | relative_url }})
 
 Five ports are open:
 
@@ -112,7 +112,7 @@ LIST
 RETR 1
 ```
 
-![Reading Bob's email over POP3](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image45.png)
+![Reading Bob's email over POP3]({{ '/images/nully-cybersecurity/02-pop3-mail.png' | relative_url }})
 
 There is one message, from the mail-server admin **Bob Smith**, and he admits
 his password is very simple. That is a strong hint: admins often reuse their
@@ -130,7 +130,7 @@ hydra -L username.txt -P username.txt -f ssh://192.168.1.46:2222
 
 It lands on **`bob` / `bobby1985`**.
 
-![hydra finds bob's SSH password](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image40.png)
+![hydra finds bob's SSH password]({{ '/images/nully-cybersecurity/03-hydra-ssh.png' | relative_url }})
 
 ```bash
 ssh bob@192.168.1.46 -p 2222
@@ -153,7 +153,7 @@ a classic step sideways into another account:
 sudo -u my2user /bin/bash /opt/scripts/check.sh
 ```
 
-![Shell as my2user](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image47.png)
+![Shell as my2user]({{ '/images/nully-cybersecurity/04-shell-my2user.png' | relative_url }})
 
 Now as `my2user`, we check `sudo -l` again. This user can run **`zip` as root
 without a password**. `zip` is on [GTFOBins](https://gtfobins.github.io/gtfobins/zip/#sudo),
@@ -205,7 +205,7 @@ web server show up as `localhost:8000` on our own machine:
 ssh -L 8000:172.17.0.3:80 root@192.168.1.46 -p 2222 -i id_rsa
 ```
 
-![Local port forward established](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image33.png)
+![Local port forward established]({{ '/images/nully-cybersecurity/05-ssh-tunnel.png' | relative_url }})
 
 Now `http://localhost:8000` *is* the internal web server.
 
@@ -225,7 +225,7 @@ it:
 http://localhost:8000/ping/ping.php?host=172.17.0.1
 ```
 
-![ping.php reflects command output — command injection](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image53.png)
+![ping.php reflects command output — command injection]({{ '/images/nully-cybersecurity/06-ping-command-injection.png' | relative_url }})
 
 That is a textbook **OS command injection**: whatever we append after a `;`
 gets executed on the server.
@@ -262,7 +262,7 @@ launch an interactive shell.
 > server, and `172.17.0.3` is the web server. Adjust to whatever your own
 > `netdiscover` shows.
 
-![Reverse shell as www-data](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image54.png)
+![Reverse shell as www-data]({{ '/images/nully-cybersecurity/07-reverse-shell.png' | relative_url }})
 
 We land as the low-privileged **`www-data`**.
 
@@ -299,7 +299,7 @@ starts it. We inspect its strings:
 strings current-date
 ```
 
-![strings output of current-date](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image7.png)
+![strings output of current-date]({{ '/images/nully-cybersecurity/08-strings-current-date.png' | relative_url }})
 
 It calls `date` **without a full path** (not `/bin/date`). That means the
 system searches the folders in `$PATH` to find `date` — and we control `$PATH`.
@@ -322,7 +322,7 @@ rights it inherited from the SUID `current-date`.
 > commands in screenshots; the block above is the standard, working form of
 > that technique.
 
-![Root on the web server — 2_flag.txt](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image2.png)
+![Root on the web server — 2_flag.txt]({{ '/images/nully-cybersecurity/09-root-web-server.png' | relative_url }})
 
 We now own the **web server**, and `2_flag.txt` is ours.
 
@@ -336,7 +336,7 @@ From the web server we can reach the **file server** at `172.17.0.2`, which
 allows **anonymous FTP** — log in with the username `anonymous` and no
 password:
 
-![Anonymous FTP enabled](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image55.png)
+![Anonymous FTP enabled]({{ '/images/nully-cybersecurity/10-anonymous-ftp.png' | relative_url }})
 
 Inside are `file.txt` (nothing useful) and `backup.zip`. We move the archive
 back to our own machine with `netcat` so it is easier to work on:
@@ -360,7 +360,7 @@ john zip.hash
 
 The password is **`1234567890`**.
 
-![john cracks the zip password](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image21.png)
+![john cracks the zip password]({{ '/images/nully-cybersecurity/11-john-zip-crack.png' | relative_url }})
 
 Inside we find credentials for a user, **donald**, who has access to the
 **database server**. We SSH to it from the web server.
@@ -384,7 +384,7 @@ chmod +x 41154.sh
 # -> drops you into a root shell
 ```
 
-![Root on the database server](https://raw.githubusercontent.com/Khanh1916/null-cybersecurity-walkthrough/main/images/media/image22.png)
+![Root on the database server]({{ '/images/nully-cybersecurity/12-root-db-server.png' | relative_url }})
 
 That gives us **root on the database server** and the final flag. All three
 servers owned.
