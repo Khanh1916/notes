@@ -11,6 +11,8 @@ description: >
   EXECUTE IMMEDIATE — each one explained, exploited, and then fixed.
 ---
 
+**English** · [Tiếng Việt]({{ '/2026/11/13/oracle-sec-lab-walkthrough-vi.html' | relative_url }})
+
 > **Lab use only.** OracleSecLab is a *deliberately* vulnerable application I
 > wrote for teaching database security. Everything below is done against my own
 > copy running on `localhost` in Docker. The weaknesses are intentional — never
