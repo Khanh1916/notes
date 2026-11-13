@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Nully Cybersecurity (VulnHub) — a beginner's walkthrough"
-date: 2026-11-13
+date: 2026-03-08
 author: Nguyen Nam Khanh
 tags: [vulnhub, walkthrough, pentest, privilege-escalation, pivoting]
 description: >
