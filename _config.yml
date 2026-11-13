@@ -3,5 +3,4 @@ description: CTF walkthroughs and security notes by Nguyen Nam Khanh.
 theme: minima
 url: "https://khanh1916.github.io"
 baseurl: "/writeups"
-author:
-  name: Nguyen Nam Khanh
+author: Nguyen Nam Khanh
