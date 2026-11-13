@@ -10,6 +10,8 @@ description: >
   servers, pivoting through an internal Docker network along the way.
 ---
 
+**English** · [Tiếng Việt]({{ '/2026/03/08/nully-cybersecurity-walkthrough-vi.html' | relative_url }})
+
 > **Lab use only.** Everything below is done against *Nully Cybersecurity: 1*,
 > a deliberately vulnerable virtual machine running on my own isolated
 > network. Never run these techniques against systems you do not own or do
