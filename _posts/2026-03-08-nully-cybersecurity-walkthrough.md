@@ -442,7 +442,7 @@ does not hand over the rest.
 
 Nếu bạn mới tập tành penetration testing, một máy dạng boot-to-root là cách học tốt
 vào loại nhất. Khởi đầu trong tay chỉ có một địa chỉ IP, rồi từng bước leo lên quyền
-root. Máy này đáng để bắt đầu, vì nó không phải một câu đố đơn lẻ. Nó là ba máy nối
+root. Bài này đáng để bắt đầu, vì nó không phải một câu đố đơn lẻ. Nó là ba máy nối
 chuỗi với nhau, ta phải pivot từ máy này sang máy kế tiếp.
 
 Đi hết bài, ta chạm vào gần như mọi bước của một đợt pentest thật: recon, đọc mail
@@ -595,9 +595,9 @@ Xâm nhập mail server thành công. Flag 1 về tay.
 
 ## Flag 2: pivot sang web server
 
-Có root trên một máy hiếm khi là hết chuyện. Máy này nằm trong một mạng Docker nội
-bộ (`172.17.0.0/16`) mà ta chỉ thấy được từ mail server. Luồn tới các máy ẩn đó gọi
-là pivoting. Trước hết ta thả một SSH key lên mail server làm đường quay lại cho
+Có root trên một máy hiếm khi là hết chuyện. Mô hình này nằm trong một mạng Docker
+nội bộ (`172.17.0.0/16`) mà ta chỉ thấy được từ mail server. Luồn tới các máy ẩn đó
+gọi là pivoting. Trước hết ta thả một SSH key lên mail server làm đường quay lại cho
 chắc, rồi mới dò.
 
 ### Vẽ bản đồ mạng nội bộ
