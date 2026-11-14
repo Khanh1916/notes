@@ -34,6 +34,19 @@
     });
   }
 
+  /* --- mail: copy the address (a bare mailto does nothing without a mail app) */
+  var mail = d.querySelector("[data-copy]");
+  if (mail && navigator.clipboard) {
+    mail.addEventListener("click", function (e) {
+      e.preventDefault();
+      navigator.clipboard.writeText(mail.getAttribute("data-copy")).then(function () {
+        var was = mail.textContent;
+        mail.textContent = "copied";
+        setTimeout(function () { mail.textContent = was; }, 1600);
+      }, function () { window.location.href = mail.href; });
+    });
+  }
+
   /* --- reading progress --------------------------------------------------- */
   var bar = d.getElementById("progress");
   var top = d.getElementById("to-top");

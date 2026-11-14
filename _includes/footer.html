@@ -6,8 +6,7 @@
     </div>
     <div class="site-foot__links">
       <a href="https://github.com/{{ site.github_user }}" rel="me noopener">profile</a>
-      <a href="{{ '/feed.xml' | relative_url }}">feed</a>
-      <a href="mailto:{{ site.email }}">mail</a>
+      <a href="mailto:{{ site.email }}" data-copy="{{ site.email }}" title="{{ site.email }}">mail</a>
     </div>
   </div>
 </footer>
