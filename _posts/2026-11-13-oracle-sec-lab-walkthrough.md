@@ -449,30 +449,31 @@ yours alone.
 
 <div class="lang-vi" markdown="1">
 
-> Chỉ dùng trong lab. OracleSecLab là app mình tự viết, cố ý nhét sẵn các bug này
-> để dạy về database security. Mọi thứ bên dưới mình chạy trên máy mình, ở
+> Chỉ dùng trong lab. OracleSecLab là app tôi tự viết, cố ý cài sẵn các lỗ hổng
+> này để dạy về database security. Mọi thứ bên dưới đều chạy trên máy của tôi, ở
 > `localhost`, trong Docker. Các lỗ hổng đều là cố ý. Đừng bao giờ đem các kỹ
 > thuật này test lên hệ thống bạn không sở hữu hoặc chưa được phép.
 
-Nhiều lab web có bug cho newbie chạy trên MySQL, PostgreSQL hoặc SQLite, kiểu
-DVWA, WebGoat hay Juice Shop. Oracle thì khác. SQL của Oracle có syntax riêng:
-`DUAL`, `ROWNUM`, `USER_TABLES`, `FETCH FIRST`. Nó còn có PL/SQL, kiểu stored
-program riêng. Cách inject và enum table cũng khác hẳn. Mình viết OracleSecLab để
-luyện đúng những cái đó. Nó là một fake academy portal, tên "FPT Student Portal",
-chạy Oracle 23c Free với PHP 8.3 và Apache. Trong đó mình nhét vào bốn bug, giấu
-giữa vài chục page bình thường.
+Nhiều lab web có lỗ hổng cho newbie chạy trên MySQL, PostgreSQL hoặc SQLite, kiểu
+DVWA, WebGoat hay Juice Shop. Oracle thì khác. Nó có cú pháp SQL riêng: `DUAL`,
+`ROWNUM`, `USER_TABLES`, `FETCH FIRST`, có PL/SQL với kiểu stored program riêng.
+Cách inject và liệt kê bảng cũng khác hẳn. Tôi viết OracleSecLab để luyện đúng
+những thứ đó. Nó là một fake academy portal tên "FPT Student Portal", chạy Oracle
+23c Free với PHP 8.3 và Apache. Bên trong giấu bốn lỗ hổng, lẫn giữa vài chục
+trang bình thường.
 
-Bài này đi qua cả bốn bug, nhìn từ phía attacker. Mỗi bug mình ghi lại phần recon,
-payload chạy được, lý do nó ăn, và cái fix nằm trong thư mục `secure_versions/`
-của repo. Bài này thay cho một walkthrough ba bug mình viết cho bản trước. Giờ
-code có thêm bug thứ tư, PL/SQL injection, và nhiều thứ xung quanh hơn.
+Bài này đi qua cả bốn lỗ hổng, nhìn từ phía attacker. Mỗi lỗ hổng tôi ghi lại phần
+recon, payload chạy được, lý do nó ăn, và cách vá nằm trong thư mục
+`secure_versions/`. Bài này thay cho walkthrough ba lỗ hổng tôi viết cho bản
+trước. Giờ code có thêm lỗ hổng thứ tư, PL/SQL injection, và nhiều thứ xung quanh
+hơn.
 
 Bốn thử thách:
 
-| # | Bug | Ở đâu | OWASP 2021 |
+| # | Lỗ hổng | Ở đâu | OWASP 2021 |
 |---|---|---|---|
 | 1 | Oracle UNION SQL injection (flag chia mảnh) | `search.php?q=` | A03 Injection |
-| 2 | Business-logic bug (số lượng âm) | `store.php` | A04 Insecure Design |
+| 2 | Lỗi business logic (số lượng âm) | `store.php` | A04 Insecure Design |
 | 3 | Broken access control thành poison supply-chain | `partner_config.php` + `admin.php` | A01 / A06 |
 | 4 | Oracle PL/SQL injection (`EXECUTE IMMEDIATE`) | `course_lookup.php` | A03 Injection |
 
@@ -480,7 +481,7 @@ Bốn thử thách:
 
 ## Tự dựng mà chơi
 
-Cả cái lab gói trong một câu lệnh, không cần cài Oracle:
+Cả lab gói trong một câu lệnh, không cần cài Oracle:
 
 ```bash
 git clone https://github.com/Khanh1916/oracle-sec-lab.git
@@ -488,22 +489,21 @@ cd oracle-sec-lab
 RANDOMIZE_FLAGS=1 docker compose up -d
 ```
 
-Xong thì mở `http://localhost:8080/dbs401-oracle-app` và login. Hai account mình
-dùng ở dưới:
+Mở `http://localhost:8080/dbs401-oracle-app` rồi login. Hai tài khoản tôi dùng ở
+dưới:
 
-| Account | Password | Vai trò |
+| Tài khoản | Mật khẩu | Vai trò |
 |---|---|---|
 | `student1` | `Student@123` | Student (150 credit) |
 | `admin` | `Admin@DBS401!2024` | Admin |
 
-> Nói trước về flag. Flag nào ở đây cũng có dạng `DBS401{...}`. Mình chạy bản của
-> mình với `RANDOMIZE_FLAGS=1`, nên mỗi flag trong hình chỉ là giá trị random cho
-> đúng container đó, không phải đáp án thật. Cố ý vậy. Mình muốn bạn nắm cách làm,
-> không phải chép sẵn chuỗi cuối. Bạn tự giải trên máy bạn thì flag là của riêng
-> bạn.
+> Nói trước về flag. Flag ở đây đều có dạng `DBS401{...}`. Tôi chạy bản của mình
+> với `RANDOMIZE_FLAGS=1`, nên flag trong hình chỉ là giá trị random cho đúng
+> container đó, không phải đáp án thật. Cố ý vậy. Tôi muốn bạn nắm cách làm, chứ
+> không chép sẵn chuỗi cuối. Bạn tự giải trên máy mình thì flag là của riêng bạn.
 
-Đây là cái portal sau khi mình login bằng `student1`, một dashboard học vụ bình
-thường. Cái UI này không liên quan gì tới bug. Nó chỉ để nhìn cho giống thật.
+Đây là trang portal sau khi login bằng `student1`, một dashboard học vụ bình
+thường. Cả giao diện này không dính gì tới lỗ hổng. Nó chỉ để nhìn cho giống thật.
 
 ![Dashboard của FPT Student Portal sau khi đăng nhập bằng tài khoản sinh viên]({{ '/images/oracle-sec-lab/00-dashboard.jpg' | relative_url }})
 
@@ -514,18 +514,18 @@ thường. Cái UI này không liên quan gì tới bug. Nó chỉ để nhìn c
 ### Tìm chỗ inject
 
 Trang search sinh viên (`search.php`) nhìn bình thường. Gõ tên một ngành có thật,
-nó trả về một table sinh viên:
+nó trả về một bảng sinh viên:
 
 ![Tìm bình thường với "Software" trả về danh sách sinh viên]({{ '/images/oracle-sec-lab/01-search-normal.jpg' | relative_url }})
 
-Mình thử phá bằng single quote. Gửi `?q='`, page báo lỗi ngay, nhưng lỗi được
-catch gọn, không lộ stack trace:
+Ta thử phá bằng một dấu nháy đơn. Gửi `?q='`, trang báo lỗi ngay. Nhưng lỗi được
+bắt gọn, không lộ stack trace:
 
 ![Một dấu nháy đơn làm hiện "Search failed. Please check your input."]({{ '/images/oracle-sec-lab/02-search-quote-error.jpg' | relative_url }})
 
-Chính dòng "Search failed" đó là dấu hiệu: single quote đã lọt xuống tới database
-và làm hỏng query. Bên dưới, `search.php` ghép SQL bằng cách dán thẳng input vào
-chuỗi:
+Chính dòng "Search failed" đó là dấu hiệu: dấu nháy đã lọt xuống tới database và
+làm hỏng câu truy vấn. Bên dưới, `search.php` ghép SQL bằng cách dán thẳng input
+vào chuỗi:
 
 ```php
 $sql = "SELECT student_id, full_name, major FROM STUDENTS
@@ -533,39 +533,39 @@ $sql = "SELECT student_id, full_name, major FROM STUDENTS
           AND hidden_marker = 'NORMAL' AND ROWNUM <= 5";
 ```
 
-Input của mình rơi vào trong một literal `LIKE '%...%'`. Literal đó lại nằm trong
-cặp ngoặc đơn. Muốn chiếm query, mình phải đóng dấu `%` và dấu nháy, đóng ngoặc,
-rồi comment nốt phần sau. Nên đoạn đầu để thoát ra là `KEYWORD%') ... --`.
+Input của ta lọt vào giữa một literal `LIKE '%...%'`, mà literal đó lại nằm trong
+cặp ngoặc đơn. Muốn chiếm câu truy vấn, ta phải đóng dấu `%` với dấu nháy, đóng
+ngoặc, rồi comment nốt phần sau. Vậy đoạn mở đầu để thoát ra là `KEYWORD%') ... --`.
 
 ### Coi chừng blacklist từ khóa
 
-Có một chỗ vướng, một blacklist chặn các từ DDL:
+Có đúng một chỗ vướng: một blacklist chặn các từ DDL.
 
 ```php
 $ddlBlacklist = ['DROP','DELETE','UPDATE','INSERT','CREATE','ALTER','TRUNCATE'];
 ```
 
-`UNION SELECT` không nằm trong list, nên inject kiểu đọc data đi lọt. Có một cái
-bẫy để dành: phép kiểm là so khớp chuỗi con, không phân biệt hoa thường, nên riêng
-chữ `update_url` bị chặn vì có `UPDATE` bên trong. Nhớ chi tiết này cho Thử thách
-3.
+`UNION SELECT` không nằm trong list, nên inject kiểu đọc dữ liệu đi lọt. Nhưng để
+ý một cái bẫy cho sau: phép kiểm là so khớp chuỗi con, không phân biệt hoa thường,
+nên riêng chữ `update_url` bị chặn vì có `UPDATE` bên trong. Nhớ chi tiết này cho
+Thử thách 3.
 
-### Số cột và kiểu data
+### Số cột và kiểu dữ liệu
 
-`UNION` của Oracle bắt hai vế cùng số cột và cùng kiểu tương thích, và mỗi `SELECT`
+`UNION` của Oracle bắt hai vế cùng số cột, cùng kiểu tương thích, và mỗi `SELECT`
 đều cần một `FROM`. Đó là lúc cần tới `DUAL`. Payload ngây thơ
 `UNION SELECT 1,2,3 FROM DUAL` lại lỗi: cột 2 và 3 bên trái là `VARCHAR2`, bên
-phải là số, Oracle không chịu ghép hai kiểu đó. Nhét string vào là xong:
+phải là số, Oracle không chịu ghép hai kiểu đó. Đưa chuỗi vào là xong:
 
 ```sql
 -- ba cột: NUMBER, VARCHAR2, VARCHAR2
 x%') UNION SELECT 1,'a','b' FROM DUAL--
 ```
 
-### Liệt kê table
+### Liệt kê bảng
 
-`USER_TABLES` liệt kê mọi table trong schema của app. Mình nhét `table_name` vào
-một cột string:
+`USER_TABLES` liệt kê mọi bảng trong schema của app. Ta nhét `table_name` vào một
+cột kiểu chuỗi:
 
 ```sql
 x%') UNION SELECT ROWNUM, table_name, NULL FROM USER_TABLES WHERE ROWNUM<=14--
@@ -573,13 +573,14 @@ x%') UNION SELECT ROWNUM, table_name, NULL FROM USER_TABLES WHERE ROWNUM<=14--
 
 ![UNION injection liệt kê các bảng của schema, gồm FLAGS và CONFIG_STORE]({{ '/images/oracle-sec-lab/03-union-tables.jpg' | relative_url }})
 
-Một số tên đáng chú ý lộ ra: `FLAGS`, `AUDIT_LOGS`, `CONFIG_STORE`,
+Một số cái tên đáng chú ý lộ ra: `FLAGS`, `AUDIT_LOGS`, `CONFIG_STORE`,
 `ADMIN_SECRETS`, `SYSTEM_HINTS`, kèm vài decoy như `FAKE_FLAGS` và `FLAG_ARCHIVE`.
-Lab nhét đầy decoy để bẫy ai chỉ quen grep mỗi chữ "flag".
+Lab cài đầy decoy để bẫy ai chỉ quen grep mỗi chữ "flag". (Từ "decoy" nghĩa là mồi
+nhử.)
 
-### Flag chia ba mảnh, ba kiểu encode
+### Flag chia ba mảnh, ba kiểu mã hóa
 
-Dump table `FLAGS` chỉ cho bạn một mảnh, không phải cả flag, lại kèm một decoy:
+Dump bảng `FLAGS` chỉ ra một mảnh, không phải cả flag, lại kèm một decoy:
 
 ```sql
 x%') UNION SELECT 1, flag_code, flag_part FROM FLAGS--
@@ -588,13 +589,13 @@ x%') UNION SELECT 1, flag_code, flag_part FROM FLAGS--
 ![Bảng FLAGS cho ra một mảnh hex thật và một decoy base64]({{ '/images/oracle-sec-lab/04-flags-fragments.jpg' | relative_url }})
 
 `FL1_PART_A` là một chuỗi hex (`4442...`; decode theo byte hex thì mở đầu bằng
-`DBS401{SQL_`). `FL_DECOY_B` là base64, decode ra `SOME_FAKE_FLAG_HERE`, nên bỏ
-qua. Hai mảnh thật còn lại nằm chỗ khác, encode theo kiểu khác. Đó mới là cái cốt
-của thử thách:
+`DBS401{SQL_`). `FL_DECOY_B` là base64, decode ra `SOME_FAKE_FLAG_HERE`, bỏ qua.
+Hai mảnh thật còn lại nằm chỗ khác, mã hóa theo kiểu khác. Đó mới là cái cốt của
+thử thách:
 
-- Mảnh B nằm ở `AUDIT_LOGS.metadata_note`, một block JSON có field `"fragment"`
+- Mảnh B nằm ở `AUDIT_LOGS.metadata_note`, một block JSON có trường `"fragment"`
   viết ngược. Đảo chuỗi lại là đọc được.
-- Mảnh C nằm trong `CONFIG_STORE` ở key `sys_alpha_marker`, encode base64.
+- Mảnh C nằm trong `CONFIG_STORE` ở khóa `sys_alpha_marker`, mã hóa base64.
 
 ```sql
 -- Mảnh B
@@ -607,9 +608,9 @@ x%') UNION SELECT 1, config_value, config_key FROM CONFIG_STORE
 ```
 
 Decode từng mảnh (hex sang ASCII, đảo ngược chuỗi, base64 sang ASCII) rồi ghép
-lại. Ba mảnh ghép thành đúng một flag `DBS401{SQL_..._..._...}`. Còn hai decoy
-base64 nằm ở `CONFIG_STORE` (`sys_beta_marker`) và `FLAGS` để ngốn thời gian của
-scanner tự động. Decode ra sạch đẹp không có nghĩa là đúng.
+lại. Ba mảnh ghép thành đúng một flag `DBS401{SQL_..._..._...}`. Trong
+`CONFIG_STORE` (`sys_beta_marker`) và `FLAGS` còn hai decoy base64 nữa để ngốn thời
+gian của scanner. Decode ra sạch đẹp thì chưa chắc đã đúng.
 
 ### Fix
 
@@ -624,21 +625,21 @@ oci_bind_by_name($stmt, ':kw', $param);
 oci_execute($stmt);
 ```
 
-Blacklist chỉ mách cho attacker biết cần né chữ nào. Bind variable mới bịt được
-bug. (Xem `secure_versions/search_secure.php`.)
+Blacklist chỉ mách cho attacker biết cần né chữ nào. Bind variable mới bịt được lỗ
+hổng. (Xem `secure_versions/search_secure.php`.)
 
 ---
 
 ## Thử thách 2: số lượng âm là tiền free
 
 Material Store (`store.php`) bán một cuốn tài liệu ôn thi rẻ (100 credit) và một
-món bị khóa, "Exam Leak 2024 (CLASSIFIED)", giá 999,999 credit. Student của mình
-có 150. Thoạt nhìn thì không có cách nào.
+món bị khóa, "Exam Leak 2024 (CLASSIFIED)", giá 999,999 credit. Tài khoản student
+của ta có 150. Thoạt nhìn thì chịu.
 
 ![Store: 150 credit, một món rẻ, và một món khóa giá 999,999 credit]({{ '/images/oracle-sec-lab/06-store-before.jpg' | relative_url }})
 
-Server có check xem bạn đủ tiền trả đơn không. Nó không check số lượng có phải số
-dương:
+Server có kiểm tra ta đủ tiền trả đơn không. Nhưng nó không kiểm tra số lượng có
+phải số dương:
 
 ```php
 $cost = $qty * $price;            // qty lấy thẳng từ form
@@ -647,23 +648,23 @@ if ($credits >= $cost) {
 }
 ```
 
-Order −10,000 cuốn tài liệu 100 credit, phép tính lật ngược:
+Đặt mua −10,000 cuốn tài liệu 100 credit, phép tính lật ngược:
 
 ```text
 cost        = -10,000 * 100          = -1,000,000
 new_credits =    150 - (-1,000,000)  =  1,000,150
 ```
 
-Trừ một số âm là cộng nó vào. Số dư nhảy qua mốc 999,999, món tài liệu khóa mở ra:
+Trừ một số âm là cộng vào. Số dư vọt qua mốc 999,999, món tài liệu khóa mở ra:
 
 ![Sau khi đặt số lượng âm, credit nhảy lên 1,000,150 và flag mở khóa]({{ '/images/oracle-sec-lab/07-store-flag.jpg' | relative_url }})
 
-Không inject, không tool gì đặc biệt, chỉ là một input người design chưa từng nghĩ
-tới. Nên nó thuộc A04, Insecure Design. Code làm đúng cái nó được viết ra để làm.
+Không inject, không tool gì ghê gớm, chỉ là một input người thiết kế chưa từng nghĩ
+tới. Vậy nên nó thuộc A04, Insecure Design: code chạy đúng y như người ta viết ra.
 
 ### Fix
 
-Check giá trị biên ở server, lần nào cũng check:
+Kiểm tra giá trị biên ở server, lần nào cũng kiểm:
 
 ```php
 if ($qty <= 0 || $qty > 100) {
@@ -675,25 +676,26 @@ if ($qty <= 0 || $qty > 100) {
 }
 ```
 
-Cái `min="1"` phía client chỉ để làm cảnh. Attacker có mở form của bạn đâu. (Xem
+Cái `min="1"` phía client chỉ để làm cảnh. Attacker có dùng form của bạn đâu. (Xem
 `secure_versions/store_secure.php`.)
 
 ---
 
 ## Thử thách 3: từ broken access control thành poison supply-chain
 
-Bug này là cả một chuỗi. Trang admin có nút check update: nó đọc một URL manifest
-đối tác từ database, tải JSON đó về, thấy manifest khai version mới hơn thì xử lý
-luôn payload. Poison cái URL đó là bạn quyết định được server của admin tải gì về.
+Lỗ hổng này là cả một chuỗi. Trang admin có nút check update: nó đọc một URL
+manifest đối tác từ database, tải JSON đó về, thấy manifest khai version mới hơn
+thì xử lý luôn payload. Chiếm được cái URL đó là ta nắm luôn việc server admin tải
+gì về.
 
 ### Recon: moi config ẩn
 
-Trang admin chỉ hiện các dòng config public. Dòng mình cần, `update_url`, bị đánh
-dấu private nên không bao giờ ló ra UI. Mình có sẵn SQL injection từ Thử thách 1,
-nên dump thẳng `CONFIG_STORE`.
+Trang admin chỉ hiện các dòng config public. Dòng ta cần, `update_url`, bị đánh dấu
+private nên không bao giờ ló ra giao diện. Nhưng ta đã có sẵn SQL injection từ Thử
+thách 1, nên dump thẳng `CONFIG_STORE`.
 
-Tới đây blacklist cắn: payload chứa chữ `update_url` bị chặn vì có `UPDATE`. Cách
-lách là đừng gọi đích danh nó. Dump cả table rồi tự đọc dòng cần tìm trong kết
+Đến đây blacklist chặn lại: payload chứa chữ `update_url` bị loại vì có `UPDATE`.
+Cách lách là đừng gọi đích danh nó. Dump cả bảng rồi tự đọc dòng cần tìm trong kết
 quả:
 
 ```sql
@@ -703,47 +705,46 @@ x%') UNION SELECT 1, config_key, config_value FROM CONFIG_STORE
 
 ![SQLi lộ ra update_url riêng tư và app_version từ CONFIG_STORE]({{ '/images/oracle-sec-lab/05-config-recon.jpg' | relative_url }})
 
-Giờ mình biết server tải update từ `http://127.0.0.1:8081/manifest.json`, và
-`app_version` hiện tại là `3.1.0`. Muốn kích hoạt luồng update, manifest của mình
+Giờ ta biết server tải update từ `http://127.0.0.1:8081/manifest.json`, và
+`app_version` hiện tại là `3.1.0`. Muốn kích hoạt luồng update, manifest của ta
 phải khai version cao hơn.
 
 ### Broken access control: trang config tin mọi người
 
-Có một page ẩn, `partner_config.php`, cho sửa cái URL đó. Nó dán nhãn "ADMIN
-ONLY", và nhãn đó là thứ duy nhất canh cửa. Code chỉ check bạn đã login hay chưa,
-hết. Thế là một student quèn đi thẳng vào sửa infra của đối tác:
+Có một trang ẩn, `partner_config.php`, cho sửa cái URL đó. Nó dán nhãn "ADMIN
+ONLY", mà cái nhãn là thứ duy nhất canh cửa. Code chỉ kiểm tra ta đã login hay
+chưa, hết. Vậy là một tài khoản student quèn đi thẳng vào sửa hạ tầng của đối tác:
 
 ![Một sinh viên đã đăng nhập mở được trang cấu hình đối tác vốn chỉ dành cho admin]({{ '/images/oracle-sec-lab/08-partner-config-student.jpg' | relative_url }})
 
-Mình trỏ URL manifest sang một payload của mình. Trong một đợt pentest thật, bạn
-sẽ tự host nó trên máy mình. Trong lab mình dựng sẵn một manifest thứ hai,
-`demo.json`, khai version `9.9.9` và kèm sẵn `flag_part`. Student lưu lọt, vì chẳng
-có gì enforce access control:
+Ta trỏ URL manifest sang một payload của mình. Ngoài thực tế thì host nó trên máy
+của ta; trong lab tôi dựng sẵn một manifest thứ hai, `demo.json`, khai version
+`9.9.9` và kèm sẵn `flag_part`. Student lưu được ngay, vì chẳng có gì chặn quyền:
 
 ![Sinh viên ghi đè thành công URL manifest đối tác]({{ '/images/oracle-sec-lab/09-partner-poisoned.jpg' | relative_url }})
 
 ### Sập bẫy khi vào vai admin
 
 Giờ admin bấm check update (`admin.php?check_updates=1`). Server tải về manifest đã
-bị mình poison, thấy `9.9.9 > 3.1.0`, tin ngay, lấy chuỗi hex `flag_part` từ file
-của mình, ghép với nửa secret nằm ở server, rồi hex-decode kết quả in ra page:
+bị ta đầu độc, thấy `9.9.9 > 3.1.0`, tin ngay, lấy chuỗi hex `flag_part` từ file
+của ta, ghép với nửa secret nằm ở server, rồi hex-decode in thẳng ra trang:
 
 ![Lần kiểm tra cập nhật của admin tải manifest độc hại và để lộ flag supply-chain]({{ '/images/oracle-sec-lab/10-admin-flag.jpg' | relative_url }})
 
-"Update successful! System upgraded to version 9.9.9", flag rơi ra. Một student
-không quyền hành gì đã cho data của mình chạy trong vùng tin cậy của admin. Một vụ
-tấn công supply-chain thật diễn ra đúng kiểu này: bạn chiếm một thứ mà mục tiêu
-tin, rồi để chính mục tiêu kéo nó về giúp bạn.
+"Update successful! System upgraded to version 9.9.9", flag rơi ra. Một tài khoản
+student không quyền hành gì đã cho dữ liệu của mình chạy trong vùng tin cậy của
+admin. Một vụ tấn công supply-chain thật diễn ra đúng kiểu này: ta chiếm một thứ mà
+mục tiêu tin, rồi để chính mục tiêu tự tải nó về.
 
 ### Fix
 
-Ba điểm hỏng riêng, ba fix:
+Ba chỗ hỏng riêng, ba cách vá:
 
-1. Enforce role. `partner_config.php` phải check
+1. Chặn quyền cho đúng. `partner_config.php` phải kiểm tra
    `$_SESSION['role'] === 'admin'` trước khi ghi gì.
-2. Allowlist origin. Đối chiếu URL update với một list ngắn các host đã duyệt,
-   đừng nhận chuỗi tự do.
-3. Verify chữ ký. Ký manifest (HMAC hoặc RSA) và từ chối thứ gì không verify được.
+2. Allowlist nguồn. Đối chiếu URL update với một list ngắn các host đã duyệt, đừng
+   nhận chuỗi tự do.
+3. Verify chữ ký. Ký manifest (HMAC hoặc RSA) rồi từ chối thứ gì không verify được.
    Version cao hơn chẳng chứng minh được gì.
 
 (Xem `secure_versions/partner_config_secure.php` và `admin_update_secure.php`.)
@@ -752,9 +753,9 @@ Ba điểm hỏng riêng, ba fix:
 
 ## Thử thách 4: PL/SQL injection qua EXECUTE IMMEDIATE
 
-Bug cuối là bug Oracle nhất, cũng là bug mình khoái nhất, vì nhìn nó an toàn. Trang
-tra cứu Course Info (`course_lookup.php`) truyền mã môn học dưới dạng một bind
-variable:
+Lỗ hổng cuối là lỗ hổng "Oracle" nhất, cũng là lỗ hổng tôi thích nhất, vì nhìn nó
+rất an toàn. Trang tra cứu Course Info (`course_lookup.php`) truyền mã môn học dưới
+dạng một bind variable:
 
 ```php
 $sql = "SELECT FN_COURSE_LOOKUP(:code) AS info FROM DUAL";
@@ -766,7 +767,7 @@ tên môn bình thường:
 
 ![Tra cứu một mã môn bình thường trả về "Database Security"]({{ '/images/oracle-sec-lab/11-course-normal.jpg' | relative_url }})
 
-Nhưng bind ở chỗ gọi chẳng ích gì nếu chỗ dính lỗi lại là chính cái stored
+Nhưng bind ở chỗ gọi chẳng cứu được gì nếu chỗ dính lỗi lại là chính cái stored
 function. Ngó vào trong `FN_COURSE_LOOKUP`:
 
 ```sql
@@ -774,15 +775,15 @@ v_sql := 'SELECT course_name FROM COURSES WHERE course_code = ''' || p_code || '
 EXECUTE IMMEDIATE v_sql INTO v_result;
 ```
 
-Giá trị bind về tới PL/SQL an toàn, rồi function tự ghép một chuỗi SQL bằng nối
-chuỗi và chạy nó qua `EXECUTE IMMEDIATE`. Inject xảy ra ngay trong database, thấp
-hơn một tầng so với chỗ PHP tưởng đã lo xong. Bài học gọn: một bind variable chỉ
-bảo vệ đúng cái statement nó được bind vào.
+Giá trị bind xuống PL/SQL thì an toàn, nhưng function lại tự tay ghép một chuỗi SQL
+rồi chạy qua `EXECUTE IMMEDIATE`. Inject xảy ra ngay trong database, thấp hơn một
+tầng so với chỗ PHP tưởng đã lo xong. Bài học gọn: một bind variable chỉ bảo vệ
+đúng câu lệnh nó được bind vào.
 
 ### Cái bẫy một dòng
 
-Function trả về một giá trị qua `... INTO v_result`, nên query mình chèn phải trả
-về đúng một dòng. Flag nằm trong table `PLSQL_VAULT`, mà table này còn có một dòng
+Function trả về một giá trị qua `... INTO v_result`, nên câu truy vấn ta chèn phải
+trả về đúng một dòng. Flag nằm trong bảng `PLSQL_VAULT`, mà bảng này còn một dòng
 decoy, nên payload hiển nhiên trả về hai dòng và Oracle ném ra `TOO_MANY_ROWS`,
 function báo lại thành "Ambiguous result":
 
@@ -792,7 +793,7 @@ zzz' UNION SELECT secret_flag FROM PLSQL_VAULT--
 
 ![UNION ngây thơ trả về hai dòng và lỗi "Ambiguous result"]({{ '/images/oracle-sec-lab/12-course-ambiguous.jpg' | relative_url }})
 
-Lọc còn đúng một dòng thật là flag hiện về, giả dạng một tên môn học:
+Lọc còn đúng một dòng thật là flag hiện ra, giả dạng một tên môn học:
 
 ```sql
 zzz' UNION SELECT secret_flag FROM PLSQL_VAULT WHERE label='CHALLENGE_4'--
@@ -802,54 +803,54 @@ zzz' UNION SELECT secret_flag FROM PLSQL_VAULT WHERE label='CHALLENGE_4'--
 
 ### Fix
 
-Fix cái stored program, đừng fix mỗi chỗ gọi. Ưu tiên SQL tĩnh, không có chuỗi
+Vá ngay cái stored program, đừng vá mỗi chỗ gọi. Ưu tiên SQL tĩnh, không chuỗi
 động nào:
 
 ```sql
 SELECT course_name INTO v_result FROM COURSES WHERE course_code = p_code;
 ```
 
-Nếu thật sự cần SQL động, bind luôn bên trong `EXECUTE IMMEDIATE`, và đừng bao giờ
-nối chuỗi input người dùng:
+Nếu thật sự cần SQL động thì bind luôn bên trong `EXECUTE IMMEDIATE`, và đừng bao
+giờ nối chuỗi input người dùng:
 
 ```sql
 EXECUTE IMMEDIATE 'SELECT course_name FROM COURSES WHERE course_code = :c'
   INTO v_result USING p_code;
 ```
 
-Và cho function chạy bằng quyền của người gọi (`AUTHID CURRENT_USER`) để role của
-web không với tới các table như `PLSQL_VAULT` qua nó. (Xem
+Và cho function chạy bằng invoker's rights (`AUTHID CURRENT_USER`) để role của web
+không với tới các bảng như `PLSQL_VAULT` qua nó. (Xem
 `secure_versions/course_lookup_secure.php`.)
 
 ---
 
-## Bốn bug có điểm gì chung
+## Bốn lỗ hổng có điểm gì chung
 
-Bốn bug đến từ bốn kiểu tin nhầm, mà không cái nào cao siêu cả.
+Bốn lỗ hổng đến từ bốn kiểu tin nhầm, mà chẳng cái nào cao siêu cả.
 
-Bug thứ nhất là tin vào blacklist. Khi SQL vẫn ghép bằng nối chuỗi thì thêm một
-list từ cấm cũng chẳng cứu được: attacker chỉ cần viết payload lách quanh list đó
-là xong, nên injection sớm muộn cũng tới. Thứ chặn được nó là bind variable, không
-phải danh sách chặn chữ.
+Lỗ hổng đầu là tin vào blacklist. Khi SQL vẫn ghép bằng nối chuỗi thì thêm một list
+từ cấm cũng chẳng cứu được: attacker chỉ cần viết payload lách quanh list đó là
+xong, nên injection sớm muộn cũng tới. Thứ chặn được nó là bind variable, không
+phải một danh sách chặn chữ.
 
-Bug thứ hai là tin vào client. Form ghi số lượng tối thiểu là 1, nhưng attacker đâu
-có dùng form của bạn, họ gửi thẳng −10,000. Thành ra thứ gì browser gửi lên thì
-server cũng phải tự kiểm lại, đừng tin cái giới hạn phía client.
+Lỗ hổng thứ hai là tin vào client. Form ghi số lượng tối thiểu là 1, nhưng attacker
+có dùng form của ta đâu, họ gửi thẳng −10,000. Vậy nên thứ gì browser gửi lên,
+server đều phải tự kiểm lại, đừng tin cái giới hạn phía client.
 
-Bug thứ ba là tin vào cái nhãn với con số version. Cái banner "ADMIN ONLY" nhìn
-thì oai, nhưng nó chỉ là chữ dán lên, chẳng chặn được ai bước vào; còn version cao
-hơn thì cũng không nói lên được file tải về có thật hay không. Muốn chắc, server
-phải tự kiểm role trước khi cho đụng vào config, chỉ nhận update URL từ vài host
-mình đã biết trước, rồi verify chữ ký trên thứ nó kéo về trước khi tin.
+Lỗ hổng thứ ba là tin vào một cái nhãn với một con số version. Banner "ADMIN ONLY"
+nhìn thì oai, nhưng nó chỉ là chữ dán lên, chẳng chặn được ai; còn version cao hơn
+cũng không chứng minh được file tải về là thật. Muốn chắc, server phải tự kiểm role
+trước khi cho đụng vào config, chỉ nhận update URL từ vài host đã biết trước, rồi
+verify chữ ký trên thứ nó kéo về.
 
-Bug thứ tư là tin nhầm tầng. Bind variable ở phía PHP nhìn thì an toàn, nhưng nếu
-cái stored function bên dưới vẫn nối chuỗi rồi `EXECUTE IMMEDIATE` thì nó vô dụng,
-vì chỗ thật sự dựng query nằm sâu hơn một tầng. Muốn fix thì phải sửa đúng đoạn
-code dựng query đó, chứ không phải chỗ gọi.
+Lỗ hổng thứ tư là tin nhầm tầng. Bind variable ở phía PHP nhìn thì an toàn, nhưng
+nếu cái stored function bên dưới vẫn nối chuỗi rồi `EXECUTE IMMEDIATE` thì nó vô
+dụng, vì chỗ thật sự dựng câu truy vấn nằm sâu hơn một tầng. Muốn vá thì phải sửa
+đúng đoạn code dựng câu truy vấn đó, chứ không phải chỗ gọi.
 
-Mỗi bug đều có một bản đã hardened nằm cạnh trong `secure_versions/`, nên bạn đặt
-file dính lỗi cạnh file an toàn mà so từng dòng. Muốn thử chay thì tải lab về, tự
-giải trước khi đọc lại bài này. Flag trong container của bạn là của riêng bạn.
+Mỗi lỗ hổng đều có một bản đã làm cứng nằm cạnh trong `secure_versions/`, nên bạn
+đặt file dính lỗi cạnh file an toàn mà so từng dòng. Muốn thử chay thì tải lab về,
+tự giải trước khi đọc lại bài này. Flag trong container của bạn là của riêng bạn.
 
 > Source và hướng dẫn cài đặt đầy đủ: [github.com/Khanh1916/oracle-sec-lab](https://github.com/Khanh1916/oracle-sec-lab)
 
