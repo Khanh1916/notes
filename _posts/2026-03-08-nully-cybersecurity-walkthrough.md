@@ -806,8 +806,8 @@ Thế là ta có root trên database server. Flag cuối về tay. Cả ba serve
 ## Máy này dạy được gì
 
 Nếu bạn viết lại cho portfolio, giá trị không nằm ở bản thân flag, mà ở chỗ cho
-người đọc thấy bạn hiểu vì sao từng bước lại ăn, và một người làm defense sẽ chặn nó
-ra sao.
+người đọc thấy bạn hiểu vì sao từng bước lại chạy được, và một người làm defense sẽ
+chặn nó ra sao.
 
 Cửa đầu tiên là một password yếu, dễ đoán (`bobby1985`). Chỉ cần đặt password mạnh,
 duy nhất và rate-limit SSH là cửa đó đóng. Bước nhảy từ Bob sang account kế đến từ
@@ -823,8 +823,7 @@ vào shell, nên hãy dựng lệnh shell bằng API an toàn và allow-list, đ
 thô. `current-date` gọi binary bằng tên thay vì full path, nên luôn dùng đường dẫn
 tuyệt đối và reset `$PATH` trong các chương trình chạy quyền cao. Còn file server thì
 giao nộp nguyên một bản backup qua FTP ẩn danh, chỉ khóa bằng password `1234567890`,
-nên hãy tắt truy cập ẩn danh và coi mỗi file backup là đồ quan trọng chứ không phải
-rác.
+nên hãy tắt truy cập ẩn danh và coi mỗi bản backup là file nhạy cảm đúng nghĩa.
 
 Một password yếu ngoài rìa, cuối cùng thành quyền kiểm soát trọn cả một mạng nội bộ,
 chỉ vì máy nào cũng tin cái máy đứng ngay trước nó.
