@@ -96,6 +96,15 @@
       pre.appendChild(b);
     });
 
+    /* wide tables scroll inside a wrapper instead of shrinking to content */
+    prose.querySelectorAll("table").forEach(function (t) {
+      if (t.parentNode.classList.contains("table-wrap")) return;
+      var w = d.createElement("div");
+      w.className = "table-wrap";
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
+
     /* alt text becomes a caption; the screenshot becomes a figure */
     prose.querySelectorAll("p > img").forEach(function (img) {
       var p = img.parentNode;
@@ -138,7 +147,9 @@
           li.className = "lvl-" + h.tagName.charAt(1);
           var a = d.createElement("a");
           a.href = "#" + h.id;
-          a.textContent = (h.textContent || "").replace(/#$/, "").trim();
+          a.textContent = [].filter.call(h.childNodes, function (n) {
+            return !(n.nodeType === 1 && n.classList.contains("anchor"));
+          }).map(function (n) { return n.textContent; }).join("").trim();
           li.appendChild(a);
           list.appendChild(li);
           seen.push({ h: h, a: a });

@@ -486,8 +486,14 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 .prose table {
   width: 100%; border-collapse: collapse;
   margin: 1.5rem 0; font-size: .9rem;
-  display: block; overflow-x: auto;
+  display: block; overflow-x: auto; /* no-JS fallback */
 }
+/* site.js wraps each table so it can scroll without shrinking to its content */
+.prose .table-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0;
+}
+.prose .table-wrap > table { display: table; margin: 0; overflow: visible; }
 .prose th, .prose td {
   padding: .55rem .75rem; text-align: left;
   border: 1px solid var(--border);
