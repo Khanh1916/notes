@@ -54,7 +54,6 @@ hidden among dozens of ordinary pages.
 
 ## Scope and rules of engagement
 
-I run this like a real engagement, even though the lab is mine, to keep the habit.
 The scope is one target: the `dbs401-oracle-app` on `http://localhost:8080` and the
 Oracle database behind it. Everything the app serves is fair game. Nothing outside the
 container is.
@@ -382,9 +381,9 @@ giữa nhiều trang bình thường.
 
 ## Scope and rules of engagement
 
-Dù lab là của tôi, tôi vẫn làm như một đợt đánh thật để giữ thói quen. Phạm vi gói
-trong một target: `dbs401-oracle-app` ở `http://localhost:8080` và Oracle database phía
-sau. Mọi thứ app phục vụ ra đều được đụng tới, mọi thứ ngoài container thì không.
+Phạm vi gói trong một target: `dbs401-oracle-app` ở `http://localhost:8080` và Oracle
+database phía sau. Mọi thứ app phục vụ ra đều được đụng tới, mọi thứ ngoài container thì
+không.
 
 Đây là black-box. Tôi không có source, không có thông tin đăng nhập database, chỉ có
 hai tài khoản thường mà người dùng nào cũng có (`student1`, rồi sau là `admin`). Tôi
