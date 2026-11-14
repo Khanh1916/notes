@@ -8,24 +8,12 @@ description: >
   A full, beginner-friendly walkthrough of the Nully Cybersecurity VulnHub
   machine: from an unauthenticated port scan to root on three separate servers,
   pivoting through an internal Docker network along the way.
+platform: VulnHub
+difficulty: Beginner
+flags: 3
+read: 12
+bilingual: true
 ---
-
-<style>
-.lang-switch{display:inline-flex;border:1px solid #d0d7de;border-radius:8px;overflow:hidden;margin:0 0 2rem}
-.lang-switch button{appearance:none;-webkit-appearance:none;border:0;background:#fff;color:#57606a;font:inherit;font-size:.9rem;line-height:1;padding:.5rem 1rem;cursor:pointer;transition:background .12s,color .12s}
-.lang-switch button+button{border-left:1px solid #d0d7de}
-.lang-switch button:hover{background:#f6f8fa}
-.lang-switch button.active{background:#0969da;color:#fff}
-.lang-switch button.active:hover{background:#0860ca}
-.lang-vi{display:none}
-body.wlang-vi .lang-en{display:none}
-body.wlang-vi .lang-vi{display:block}
-</style>
-
-<div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
-  <button type="button" id="wl-en" class="active" onclick="setWLang('en')">English</button>
-  <button type="button" id="wl-vi" onclick="setWLang('vi')">Tiếng Việt</button>
-</div>
 
 <div class="lang-en" markdown="1">
 
@@ -428,9 +416,6 @@ The whole chain held only because each machine trusted the one before it. Segmen
 internal network and keep privileges apart between the servers, so cracking one host
 does not hand over the rest.
 
----
-
-*Written by Nguyen Nam Khanh ([@Khanh1916](https://github.com/Khanh1916)).*
 
 </div>
 
@@ -828,23 +813,6 @@ backup là file nhạy cảm.
 Cả chuỗi này nối được chỉ vì máy nào cũng tin máy đứng ngay trước nó. Hãy tách mạng
 nội bộ và giới hạn quyền giữa các server, để thủng một máy không kéo theo cả dải.
 
----
-
-*Viết bởi Nguyễn Nam Khánh ([@Khanh1916](https://github.com/Khanh1916)).*
 
 </div>
 
-<script>
-function setWLang(l){
-  document.body.classList.toggle('wlang-vi', l === 'vi');
-  var en = document.getElementById('wl-en'), vi = document.getElementById('wl-vi');
-  if(en) en.classList.toggle('active', l === 'en');
-  if(vi) vi.classList.toggle('active', l === 'vi');
-  try { localStorage.setItem('writeups-lang', l); } catch(e){}
-}
-(function(){
-  var saved = 'en';
-  try { saved = localStorage.getItem('writeups-lang') || 'en'; } catch(e){}
-  setWLang(saved);
-})();
-</script>

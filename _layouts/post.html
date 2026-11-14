@@ -1,0 +1,93 @@
+---
+layout: default
+---
+
+<div class="page__grid has-rail">
+  <article class="prose" itemscope itemtype="http://schema.org/BlogPosting">
+    <header class="post-head">
+      <p class="crumb"><a href="{{ '/' | relative_url }}">~/writeups</a> / {{ page.date | date: "%Y" }} / {{ page.slug }}</p>
+
+      <h1 itemprop="headline">{{ page.title }}</h1>
+
+      {%- if page.description %}
+      <p class="post-head__lede">{{ page.description | strip_newlines }}</p>
+      {%- endif %}
+
+      <div class="factbar">
+        <div class="fact">
+          <span class="fact__k">Date</span>
+          <span class="fact__v"><time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%Y-%m-%d" }}</time></span>
+        </div>
+        {%- if page.platform %}
+        <div class="fact">
+          <span class="fact__k">Target</span>
+          <span class="fact__v is-green">{{ page.platform }}</span>
+        </div>
+        {%- endif %}
+        {%- if page.difficulty %}
+        <div class="fact">
+          <span class="fact__k">Difficulty</span>
+          <span class="fact__v">{{ page.difficulty }}</span>
+        </div>
+        {%- endif %}
+        {%- if page.flags %}
+        <div class="fact">
+          <span class="fact__k">{{ page.flags_label | default: "Flags" }}</span>
+          <span class="fact__v is-red">{{ page.flags }}</span>
+        </div>
+        {%- endif %}
+        {%- if page.read %}
+        <div class="fact">
+          <span class="fact__k">Read</span>
+          <span class="fact__v">{{ page.read }} min</span>
+        </div>
+        {%- endif %}
+      </div>
+
+      {%- if page.bilingual %}
+      <div class="lang-switch" role="group" aria-label="Language / Ngon ngu">
+        <button type="button" id="wl-en" class="active" aria-pressed="true" onclick="setWLang('en')">English</button>
+        <button type="button" id="wl-vi" aria-pressed="false" onclick="setWLang('vi')">Ti&#7871;ng Vi&#7879;t</button>
+      </div>
+      {%- endif %}
+    </header>
+
+    <div itemprop="articleBody">
+      {{ content }}
+    </div>
+
+    <footer class="post-foot">
+      <p class="byline">
+        {%- if page.bilingual %}
+        <span class="lang-en">Written by <strong itemprop="author">{{ page.author | default: site.author }}</strong>, <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.</span>
+        <span class="lang-vi">Vi&#7871;t b&#7901;i <strong>Nguy&#7877;n Nam Kh&aacute;nh</strong>, <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.</span>
+        {%- else %}
+        Written by <strong itemprop="author">{{ page.author | default: site.author }}</strong>,
+        <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.
+        {%- endif %}
+        {%- if page.tags.size > 0 %}<br>Tags: {{ page.tags | join: ", " }}.{% endif %}
+      </p>
+
+      {%- if page.previous or page.next %}
+      <nav class="pager" aria-label="Other write-ups">
+        {%- if page.next %}
+        <a class="prev" href="{{ page.next.url | relative_url }}">
+          <span class="pager__k">&larr; Newer</span>
+          <span class="pager__t">{{ page.next.title }}</span>
+        </a>
+        {%- endif %}
+        {%- if page.previous %}
+        <a class="next" href="{{ page.previous.url | relative_url }}">
+          <span class="pager__k">Older &rarr;</span>
+          <span class="pager__t">{{ page.previous.title }}</span>
+        </a>
+        {%- endif %}
+      </nav>
+      {%- endif %}
+    </footer>
+  </article>
+
+  <aside class="toc" id="toc" aria-label="On this page">
+    <p class="toc__title">On this page</p>
+  </aside>
+</div>

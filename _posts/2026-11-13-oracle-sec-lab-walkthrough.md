@@ -10,24 +10,13 @@ description: >
   exploit four bugs: UNION SQL injection, a negative-quantity logic flaw, a
   broken-access-control supply-chain chain, and PL/SQL injection through
   EXECUTE IMMEDIATE.
+platform: Self-hosted
+difficulty: Intermediate
+flags: 4
+flags_label: Findings
+read: 13
+bilingual: true
 ---
-
-<style>
-.lang-switch{display:inline-flex;border:1px solid #d0d7de;border-radius:8px;overflow:hidden;margin:0 0 2rem}
-.lang-switch button{appearance:none;-webkit-appearance:none;border:0;background:#fff;color:#57606a;font:inherit;font-size:.9rem;line-height:1;padding:.5rem 1rem;cursor:pointer;transition:background .12s,color .12s}
-.lang-switch button+button{border-left:1px solid #d0d7de}
-.lang-switch button:hover{background:#f6f8fa}
-.lang-switch button.active{background:#0969da;color:#fff}
-.lang-switch button.active:hover{background:#0860ca}
-.lang-vi{display:none}
-body.wlang-vi .lang-en{display:none}
-body.wlang-vi .lang-vi{display:block}
-</style>
-
-<div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
-  <button type="button" id="wl-en" class="active" onclick="setWLang('en')">English</button>
-  <button type="button" id="wl-vi" onclick="setWLang('vi')">Tiếng Việt</button>
-</div>
 
 <div class="lang-en" markdown="1">
 
@@ -350,9 +339,6 @@ Each bug has a direct fix, ordered here by how badly it bites.
 
 > Source and full setup: [github.com/Khanh1916/oracle-sec-lab](https://github.com/Khanh1916/oracle-sec-lab)
 
----
-
-*Written by Nguyen Nam Khanh ([@Khanh1916](https://github.com/Khanh1916)).*
 
 </div>
 
@@ -672,23 +658,6 @@ Lỗ nào cũng có cách vá thẳng, xếp theo mức độ nặng.
 
 > Mã nguồn và hướng dẫn cài đặt: [github.com/Khanh1916/oracle-sec-lab](https://github.com/Khanh1916/oracle-sec-lab)
 
----
-
-*Viết bởi Nguyễn Nam Khánh ([@Khanh1916](https://github.com/Khanh1916)).*
 
 </div>
 
-<script>
-function setWLang(l){
-  document.body.classList.toggle('wlang-vi', l === 'vi');
-  var en = document.getElementById('wl-en'), vi = document.getElementById('wl-vi');
-  if(en) en.classList.toggle('active', l === 'en');
-  if(vi) vi.classList.toggle('active', l === 'vi');
-  try { localStorage.setItem('writeups-lang', l); } catch(e){}
-}
-(function(){
-  var saved = 'en';
-  try { saved = localStorage.getItem('writeups-lang') || 'en'; } catch(e){}
-  setWLang(saved);
-})();
-</script>

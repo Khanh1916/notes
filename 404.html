@@ -1,0 +1,17 @@
+---
+layout: default
+title: Not found
+permalink: /404.html
+---
+
+<div class="notfound">
+  <p class="code">HTTP 404</p>
+  <pre>$ curl -sI {{ site.url }}{{ site.baseurl }}&lt;this page&gt;
+HTTP/2 404
+
+# Nothing is listening on this path. Two things usually cause it:
+#   1. the URL was mistyped
+#   2. the write-up was renamed after you bookmarked it
+</pre>
+  <p style="margin-top:1.5rem"><a href="{{ '/' | relative_url }}">&larr; back to the index</a></p>
+</div>

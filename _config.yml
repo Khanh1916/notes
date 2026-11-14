@@ -1,6 +1,28 @@
 title: Security write-ups
-description: CTF walkthroughs and security notes by Nguyen Nam Khanh.
-theme: minima
+tagline: Lab notes, start to root.
+description: CTF walkthroughs, lab reports and security notes by Nguyen Nam Khanh.
+author: Nguyen Nam Khanh
+email: southkhanh@gmail.com
+github_user: Khanh1916
+lang: en
+
 url: "https://khanh1916.github.io"
 baseurl: "/writeups"
-author: Nguyen Nam Khanh
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  auto_ids: true
+  syntax_highlighter: rouge
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      author: Nguyen Nam Khanh
+
+exclude:
+  - README.md
+  - LICENSE

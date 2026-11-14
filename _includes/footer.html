@@ -1,0 +1,21 @@
+<footer class="site-foot">
+  <div class="site-foot__inner">
+    <div>
+      <p>&copy; {{ 'now' | date: "%Y" }} {{ site.author }} &middot; a.k.a. Cao Thanh Lam</p>
+      <p class="ethics">Every machine here is my own lab or a public training target. Test nothing you do not own.</p>
+    </div>
+    <div class="site-foot__links">
+      <a href="https://github.com/{{ site.github_user }}" rel="me noopener">profile</a>
+      <a href="{{ '/feed.xml' | relative_url }}">feed</a>
+      <a href="mailto:{{ site.email }}">mail</a>
+    </div>
+  </div>
+</footer>
+
+<button type="button" class="top" id="to-top" aria-label="Back to top">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5 14 10l-1.4 1.4L8 6.9 3.4 11.4 2 10 8 3.5Z"/></svg>
+</button>
+
+<div class="lightbox" id="lightbox" hidden><img src="" alt=""></div>
+
+<script src="{{ '/assets/js/site.js' | relative_url }}" defer></script>
