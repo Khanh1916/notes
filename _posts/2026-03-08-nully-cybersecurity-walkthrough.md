@@ -46,7 +46,7 @@ network pivoting, and four or five different privilege-escalation tricks.
 
 ---
 
-## Reproduce this at home
+## Run it yourself
 
 You can download the exact machine and follow along step by step.
 
@@ -402,10 +402,10 @@ owned.
 
 ---
 
-## What this box teaches
+## How to defend against this
 
-If you write this up for a portfolio, the value is not the flags. It is showing
-that you understand why each step worked and how a defender stops it.
+Every flag here came from a misconfiguration or a bad habit, and all of them are
+fixable.
 
 The first door was a weak, guessable password (`bobby1985`). Enforce strong,
 unique passwords and rate-limit SSH, and that door stays shut. The jump from Bob
@@ -424,8 +424,9 @@ file server handed over a backup over anonymous FTP, protected only by the
 password `1234567890`, so turn off anonymous access and treat backup archives as
 the sensitive files they are.
 
-One weak password at the edge turned into full control of an entire internal
-network, because each machine trusted the one before it.
+The whole chain held only because each machine trusted the one before it. Segment the
+internal network and keep privileges apart between the servers, so cracking one host
+does not hand over the rest.
 
 ---
 
@@ -435,7 +436,7 @@ network, because each machine trusted the one before it.
 
 <div class="lang-vi" markdown="1">
 
-> Chỉ dùng trong lab. Mọi thứ bên dưới tôi làm trên Nully Cybersecurity: 1, một máy
+> Mọi thứ bên dưới tôi làm trên Nully Cybersecurity: 1, một máy
 > ảo cố ý cài lỗ hổng, chạy trong mạng cô lập của riêng tôi. Đừng bao giờ đem các
 > kỹ thuật này test lên hệ thống bạn không sở hữu hoặc chưa có giấy phép.
 
@@ -450,7 +451,7 @@ kiểu leo quyền khác nhau.
 
 ---
 
-## Dựng lại ngay tại nhà
+## Tự chạy tái lập
 
 Tải đúng máy ảo này về rồi làm theo từng bước.
 
@@ -803,30 +804,29 @@ Thế là ta có root trên database server. Flag cuối về tay. Cả ba serve
 
 ---
 
-## Máy này dạy được gì
+## Phòng thủ ra sao
 
-Nếu bạn viết lại cho portfolio, giá trị không nằm ở bản thân flag, mà ở chỗ cho
-người đọc thấy bạn hiểu vì sao từng bước lại chạy được, và một người làm defense sẽ
-chặn nó ra sao.
+Mỗi flag ở đây đều đến từ một lỗi cấu hình hoặc một thói quen xấu, và cái nào cũng
+vá được.
 
-Cửa đầu tiên là một password yếu, dễ đoán (`bobby1985`). Chỉ cần đặt password mạnh,
-duy nhất và rate-limit SSH là cửa đó đóng. Bước nhảy từ Bob sang account kế đến từ
-một script write được mà lại chạy qua `sudo`, nên đừng bao giờ để user sửa được một
-script mà họ có quyền chạy dưới quyền người khác. Hai cái shell root, trên mail
-server và database server, đến từ các binary lẽ ra không nên có quyền đó: `zip` nằm
-trong `sudoers`, và một `screen 4.5.0` SUID đã quá cũ. Cách phòng là cấp quyền
-`sudo` hẹp hết mức, soi mọi binary được phép đối chiếu với GTFOBins, update phần mềm
-cũ, và gỡ bit SUID ở chỗ không cần.
+Flag 1 vào được chỉ vì password của Bob quá yếu (`bobby1985`). Đặt password mạnh,
+khác nhau cho mỗi account, thêm rate-limit cho SSH là chặn được bruteforce. Bước từ
+Bob sang my2user đến từ một script chạy qua `sudo` mà user lại sửa được, nên đừng để
+ai sửa được một script họ có quyền chạy dưới quyền người khác. Hai lần lên root, trên
+mail server và database server, đến từ các binary không nên có quyền đó: `zip` trong
+`sudoers` và một `screen 4.5.0` SUID đã quá cũ. Cấp quyền `sudo` hẹp nhất có thể,
+đối chiếu mọi binary được phép với GTFOBins, update phần mềm cũ, và gỡ bit SUID ở chỗ
+không cần.
 
-Web server thì ngã vì hai cái sai thường gặp. `ping.php` đẩy thẳng input người dùng
-vào shell, nên hãy dựng lệnh shell bằng API an toàn và allow-list, đừng ghép từ input
-thô. `current-date` gọi binary bằng tên thay vì full path, nên luôn dùng đường dẫn
-tuyệt đối và reset `$PATH` trong các chương trình chạy quyền cao. Còn file server thì
-giao nộp nguyên một bản backup qua FTP ẩn danh, chỉ khóa bằng password `1234567890`,
-nên hãy tắt truy cập ẩn danh và coi mỗi bản backup là file nhạy cảm đúng nghĩa.
+Web server dính hai lỗi quen thuộc. `ping.php` đẩy thẳng input vào shell, nên dựng
+lệnh bằng API an toàn và allow-list chứ đừng ghép từ input thô. `current-date` gọi
+binary bằng tên thay vì full path, nên luôn dùng đường dẫn tuyệt đối và đặt lại
+`$PATH` trong chương trình chạy quyền cao. File server thì để lộ cả bản backup qua
+FTP ẩn danh, chỉ khóa bằng password `1234567890`, nên tắt truy cập ẩn danh và coi
+backup là file nhạy cảm.
 
-Một password yếu ngoài rìa, cuối cùng thành quyền kiểm soát trọn cả một mạng nội bộ,
-chỉ vì máy nào cũng tin cái máy đứng ngay trước nó.
+Cả chuỗi này nối được chỉ vì máy nào cũng tin máy đứng ngay trước nó. Hãy tách mạng
+nội bộ và giới hạn quyền giữa các server, để thủng một máy không kéo theo cả dải.
 
 ---
 
