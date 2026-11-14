@@ -52,6 +52,24 @@ hidden among dozens of ordinary pages.
 
 ---
 
+## Scope and rules of engagement
+
+I run this like a real engagement, even though the lab is mine, to keep the habit.
+The scope is one target: the `dbs401-oracle-app` on `http://localhost:8080` and the
+Oracle database behind it. Everything the app serves is fair game. Nothing outside the
+container is.
+
+It is a black-box test. I get no source code and no database credentials, only the two
+ordinary app logins any user would have (`student1`, and later `admin`). I work from
+the running app alone and infer the rest from how it behaves.
+
+Rules of engagement are simple because I own the box and nobody else is on it: it runs
+on my own machine, not a shared or production system, so any technique is allowed,
+injection and fuzzing included, and I need no change window or emergency contact.
+Nothing here is destructive: I read and extract, I do not drop tables or wipe data.
+
+---
+
 ## Run it yourself
 
 The whole lab is one command, no Oracle install:
@@ -106,15 +124,29 @@ That gives the interesting surface: `search.php` (Student Search), `store.php`
 `partner_config.php` and a `check_updates` parameter on `admin.php` only show up
 through fuzzing.
 
-The assets worth going after are the student data in the database, the
-`DBS401{...}` flags, the admin side, and the external partner update integration.
-Now, which of those is likely to break. Pages that only display static data,
+Now, which pages are likely to break. The ones that only display static data,
 timetables, transcripts, I skip. The suspicious ones take my input and push it to
 the server: Student Search (free text that probably ends up in a query), Material
 Store (a quantity field, an easy money-math bug), Course Info (a lookup by code that
 hits the database), and the admin update (it pulls a file from outside, a
-supply-chain risk). A quick single-quote-and-odd-number probe confirms them, and I
-exploit them one at a time.
+supply-chain risk). A quick single-quote-and-odd-number probe confirms them.
+
+---
+
+## Assets
+
+Before exploiting anything, I take stock of what is actually worth reaching in this
+app, and how sensitive each piece is. That is what decides which findings matter
+later.
+
+| Asset | Where | Sensitivity | Why it matters |
+|---|---|---|---|
+| Student records (PII) | `STUDENTS` and related tables | High | Names, IDs and academic data, a privacy breach on its own |
+| The four flags | `FLAGS`, `AUDIT_LOGS`, `CONFIG_STORE`, `PLSQL_VAULT` | High | The goal of the lab, standing in for any crown-jewel secret |
+| Database config and secrets | `CONFIG_STORE` (e.g. `update_url`) | High | Internal URLs and settings that open further attacks |
+| Admin functions | `admin.php`, `partner_config.php` | High | Privileged actions a normal user should never reach |
+| Partner update integration | the `check_updates` flow | Critical | Pulls and runs an external file, a foothold for code execution |
+| Audit logs | `AUDIT_LOGS` | Medium | Useful to an attacker for hiding, and it also leaks a flag fragment |
 
 ---
 
@@ -295,18 +327,27 @@ zzz' UNION SELECT secret_flag FROM PLSQL_VAULT WHERE label='CHALLENGE_4'--
 
 ## Impact
 
-Rating each bug the way a report would, with OWASP's likelihood times impact:
+Each bug's severity the way a pentest report scores it, likelihood times impact:
 
-- UNION SQL injection reads the whole database, student records, config and secrets.
-  Easy to run, high impact: critical.
-- The negative-quantity flaw lets any student mint credits and buy restricted items.
-  Scoped to the store, but trivial to trigger: high.
-- The broken-access-control supply chain lets a plain student make the admin server
-  fetch and process an attacker-controlled file. Very high impact: critical.
-- PL/SQL injection reads a protected vault through a lookup that looked safe: high.
+| Vulnerability | Likelihood | Impact | Severity |
+|---|---|---|---|
+| UNION SQL injection | High, a single quote gets in | Reads the whole database: student records, config, secrets | Critical |
+| Negative-quantity logic | High, just a negative number | Mint credits and buy restricted items, scoped to the store | High |
+| Broken access control + supply chain | Medium, chains SQLi with a hidden page | Makes the admin server fetch and run an attacker-controlled file | Critical |
+| PL/SQL injection | High, injects through the lookup | Reads a protected vault that looked safe | High |
 
-Four bugs, from a quote in a search box to code running inside the admin's trust,
-with nothing but the running app in front of me.
+## Remediation
+
+Each bug has a direct fix, ordered here by how badly it bites.
+
+| Vulnerability | Fix |
+|---|---|
+| UNION SQL injection | Use bind variables for every query and never build SQL by string concatenation. Validate input against an allow-list, and run the app on a least-privilege database account, not one that can read every table. The substring filter here is not a defence and should go. |
+| Broken access control + supply chain | Check authorization on the server for every privileged action, by role, not just "logged in". For updates, pin the source, verify the manifest with a signature or checksum, and never trust a version number the client controls. |
+| PL/SQL injection | Keep `EXECUTE IMMEDIATE` on bind variables and never concatenate user input into the dynamic statement. Validate identifiers with `DBMS_ASSERT`. |
+| Negative-quantity logic | Validate the quantity on the server (an integer greater than zero) and re-check every business rule, like the balance, server-side before the order commits. |
+
+---
 
 > Source and full setup: [github.com/Khanh1916/oracle-sec-lab](https://github.com/Khanh1916/oracle-sec-lab)
 
@@ -318,13 +359,13 @@ with nothing but the running app in front of me.
 
 <div class="lang-vi" markdown="1">
 
-> Chỉ dùng trong lab. OracleSecLab là app tôi tự viết, cố ý cài sẵn các lỗ hổng để
+> OracleSecLab là app tôi tự viết, cố ý cài sẵn các lỗ hổng để
 > dạy về bảo mật cơ sở dữ liệu. Mọi thứ bên dưới chạy trên máy cá nhân, ở
 > `localhost`, trong Docker. Các lỗ hổng đều là cố ý. Không áp dụng các kỹ thuật
 > này lên hệ thống bạn không sở hữu hoặc chưa được phép.
 
 OracleSecLab là một fake academy portal ("FPT Student Portal") chạy trên Oracle
-23c Free, PHP 8.3 và Apache. Tôi dựng nó để luyện trên Oracle, vốn khác với mấy
+23c Free, PHP 8.3 và Apache. Tôi dựng nó để luyện trên Oracle, vốn khác với các
 lab MySQL, PostgreSQL mà đa số người học quen: cú pháp SQL riêng (`DUAL`, `ROWNUM`,
 `USER_TABLES`), có PL/SQL, và lối inject, liệt kê bảng riêng. Ở đây tôi đánh theo
 kiểu black-box, trong tay chỉ có app đang chạy, rồi tìm ra bốn lỗ hổng nằm lẫn
@@ -336,6 +377,23 @@ giữa nhiều trang bình thường.
 | 2 | Lỗi business logic (số lượng âm) | `store.php` | A04 Insecure Design |
 | 3 | Broken access control thành poison supply-chain | `partner_config.php` + `admin.php` | A01 / A06 |
 | 4 | Oracle PL/SQL injection (`EXECUTE IMMEDIATE`) | `course_lookup.php` | A03 Injection |
+
+---
+
+## Scope and rules of engagement
+
+Dù lab là của tôi, tôi vẫn làm như một đợt đánh thật để giữ thói quen. Phạm vi gói
+trong một target: `dbs401-oracle-app` ở `http://localhost:8080` và Oracle database phía
+sau. Mọi thứ app phục vụ ra đều được đụng tới, mọi thứ ngoài container thì không.
+
+Đây là black-box. Tôi không có source, không có thông tin đăng nhập database, chỉ có
+hai tài khoản thường mà người dùng nào cũng có (`student1`, rồi sau là `admin`). Tôi
+làm việc chỉ với app đang chạy, còn lại suy từ cách nó phản ứng.
+
+Rules of engagement đơn giản vì máy là của tôi và không có ai khác trên đó: nó chạy
+trên máy cá nhân, không phải hệ thống dùng chung hay production, nên kỹ thuật nào cũng
+dùng được, kể cả inject và fuzz, không cần cửa sổ bảo trì hay contact khẩn. Không có
+thao tác phá hoại nào, tôi chỉ đọc và rút dữ liệu ra, không drop bảng hay xóa data.
 
 ---
 
@@ -369,7 +427,7 @@ thường. Giao diện này không liên quan đến lỗ hổng.
 
 ---
 
-## Do thám
+## Recon
 
 Đầu tiên xem server chạy gì, nhìn header và đuôi URL:
 
@@ -388,19 +446,32 @@ ffuf -u 'http://localhost:8080/dbs401-oracle-app/FUZZ.php' -w words.txt -mc 200,
 ffuf -u 'http://localhost:8080/dbs401-oracle-app/admin.php?FUZZ=1' -w params.txt -mc 200
 ```
 
-Gộp lại được mấy chỗ đáng chú ý: `search.php` (Student Search), `store.php` (Material
+Gộp lại được vài chỗ đáng chú ý: `search.php` (Student Search), `store.php` (Material
 Store) và `course_lookup.php` (Course Info) nằm trên menu; `partner_config.php` và
 param `check_updates` trên `admin.php` thì phải fuzz mới ra.
 
-Tài sản đáng giá ở đây: dữ liệu sinh viên trong database, các flag `DBS401{...}`,
-phần quản trị, và tích hợp cập nhật với đối tác bên ngoài. Giờ đánh giá chỗ nào dễ
-dính. Mấy trang chỉ hiển thị dữ liệu tĩnh như thời khóa biểu
-hay bảng điểm thì bỏ qua. Đáng ngờ là chỗ nhận input rồi đẩy xuống server: Student
-Search (gõ text tự do, dễ ghép thẳng vào câu truy vấn), Material Store (có ô số
-lượng, dễ lỗi logic tính tiền), Course Info (tra cứu theo mã, cũng đụng database),
-và phần update của admin (kéo file từ ngoài về, dễ dính supply-chain). Thử nhanh
-bằng dấu nháy đơn và vài số lạ thì đúng mấy chỗ này có phản ứng, rồi khai thác lần
-lượt từng cái.
+Giờ xem chỗ nào dễ dính. Các trang chỉ hiển thị dữ liệu tĩnh như thời khóa biểu hay
+bảng điểm thì bỏ qua. Đáng ngờ là chỗ nhận input rồi đẩy xuống server: Student Search
+(gõ text tự do, dễ ghép thẳng vào câu truy vấn), Material Store (có ô số lượng, dễ lỗi
+logic tính tiền), Course Info (tra cứu theo mã, cũng đụng database), và phần update của
+admin (kéo file từ ngoài về, dễ dính supply-chain). Thử nhanh bằng dấu nháy đơn và vài
+số lạ thì đúng các chỗ này có phản ứng.
+
+---
+
+## Assets
+
+Trước khi khai thác, tôi điểm lại trong app này cái gì thật sự đáng để nhắm tới, và
+mỗi thứ nhạy tới đâu. Chính nó quyết định sau này lỗ nào mới đáng lo.
+
+| Tài sản | Ở đâu | Độ nhạy | Vì sao đáng giá |
+|---|---|---|---|
+| Dữ liệu sinh viên (PII) | bảng `STUDENTS` và các bảng liên quan | Cao | Tên, mã số, dữ liệu học vụ, rò rỉ là đã thành sự cố |
+| Bốn flag | `FLAGS`, `AUDIT_LOGS`, `CONFIG_STORE`, `PLSQL_VAULT` | Cao | Mục tiêu của lab, đóng vai mọi secret quan trọng nhất |
+| Config và secret của database | `CONFIG_STORE` (ví dụ `update_url`) | Cao | URL nội bộ và thiết lập mở đường cho các đòn sau |
+| Chức năng quản trị | `admin.php`, `partner_config.php` | Cao | Thao tác đặc quyền mà user thường không được chạm |
+| Tích hợp cập nhật đối tác | luồng `check_updates` | Nghiêm trọng | Kéo và chạy một file bên ngoài, bàn đạp để thực thi code |
+| Audit log | `AUDIT_LOGS` | Trung bình | Hữu ích cho attacker để giấu vết, và cũng lộ một mảnh flag |
 
 ---
 
@@ -501,7 +572,7 @@ Không injection, không công cụ gì, chỉ là một input mà form không l
 
 ## Challenge 3: từ broken access control thành poison supply-chain
 
-Chức năng `check_updates` tìm được ở bước do thám đọc một URL manifest đối tác, tải
+Chức năng `check_updates` tìm được ở bước recon đọc một URL manifest đối tác, tải
 JSON đó về, và nếu manifest khai version mới hơn thì xử lý payload. Đổi được URL đó
 là ta bắt được server admin tải đúng file mình muốn.
 
@@ -575,21 +646,30 @@ zzz' UNION SELECT secret_flag FROM PLSQL_VAULT WHERE label='CHALLENGE_4'--
 
 ---
 
-## Đánh giá ảnh hưởng
+## Impact
 
-Chấm mức từng lỗ như trong một báo cáo, theo kiểu OWASP (Khả năng khai thác × Mức
-ảnh hưởng):
+Xếp mức độ nghiêm trọng cho từng lỗ hổng theo cách một báo cáo pentest hay chấm, lấy
+khả năng khai thác nhân với mức ảnh hưởng:
 
-- UNION SQL injection: đọc được cả database, từ dữ liệu sinh viên tới config và
-  secret. Dễ khai thác, ảnh hưởng cao, mức nghiêm trọng.
-- Lỗi số lượng âm: student nào cũng tự tạo credit và mua được món bị khóa. Gói
-  trong phần store nhưng bấm phát là dính, mức cao.
-- Broken access control + supply-chain: một student thường ép được server admin tải
-  và xử lý file của attacker. Ảnh hưởng rất cao, mức nghiêm trọng.
-- PL/SQL injection: đọc được vault qua một hàm tra cứu nhìn thì an toàn, mức cao.
+| Lỗ hổng | Khả năng khai thác | Ảnh hưởng | Mức độ |
+|---|---|---|---|
+| UNION SQL injection | Cao, chỉ một dấu nháy là lọt | Đọc được cả database: dữ liệu sinh viên, config, secret | Nghiêm trọng |
+| Lỗi số lượng âm | Cao, chỉ cần một số âm | Tự tạo credit, mua món bị khóa, gói trong store | Cao |
+| Broken access control + supply-chain | Trung bình, phải ghép SQLi với một trang ẩn | Ép server admin tải và chạy file của attacker | Nghiêm trọng |
+| PL/SQL injection | Cao, inject qua ô tra cứu | Đọc được vault vốn nhìn thì an toàn | Cao |
 
-Bốn lỗ hổng, từ một dấu nháy trong ô search đến code chạy trong vùng tin cậy của
-admin, mà trong tay chỉ có app đang chạy.
+## Remediation
+
+Lỗ nào cũng có cách vá thẳng, xếp theo mức độ nặng.
+
+| Lỗ hổng | Cách khắc phục |
+|---|---|
+| UNION SQL injection | Dùng bind variable cho mọi câu truy vấn, đừng bao giờ ghép SQL bằng cách nối chuỗi. Lọc input theo allow-list, và chạy app bằng account database quyền thấp nhất chứ không phải account đọc được mọi bảng. Bộ lọc chuỗi con ở đây không phải biện pháp phòng, nên bỏ. |
+| Broken access control + supply-chain | Kiểm quyền ở server cho mọi thao tác đặc quyền, theo role chứ không chỉ "đã đăng nhập". Với luồng update, cố định nguồn, xác minh manifest bằng chữ ký hoặc checksum, và đừng tin số version do client kiểm soát. |
+| PL/SQL injection | Giữ `EXECUTE IMMEDIATE` chạy trên bind variable, đừng nối input người dùng vào câu SQL động. Kiểm định danh bằng `DBMS_ASSERT`. |
+| Lỗi số lượng âm | Kiểm số lượng ở server (số nguyên lớn hơn 0), và kiểm lại mọi quy tắc nghiệp vụ, như số dư, ở phía server trước khi chốt đơn. |
+
+---
 
 > Mã nguồn và hướng dẫn cài đặt: [github.com/Khanh1916/oracle-sec-lab](https://github.com/Khanh1916/oracle-sec-lab)
 
