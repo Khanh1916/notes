@@ -7,7 +7,7 @@ layout: default
     <span class="intro__dot" style="background:#ff5f57"></span>
     <span class="intro__dot" style="background:#febc2e"></span>
     <span class="intro__dot" style="background:#28c840"></span>
-    <span class="intro__title">khanh1916@sec: ~/writeups</span>
+    <span class="intro__title">khanh1916@dev: ~/notes</span>
   </div>
   <div class="intro__body">
     <p class="intro__cmd">$ <b>whoami</b> &amp;&amp; cat README</p>
@@ -18,7 +18,7 @@ layout: default
 
 {%- assign posts = site.posts -%}
 
-<h2 class="section-head">write-ups &mdash; <b id="entry-count">{{ posts | size }}</b>&nbsp;total</h2>
+<h2 class="section-head">posts &mdash; <b id="entry-count">{{ posts | size }}</b>&nbsp;total</h2>
 
 {%- assign all_tags = site.tags | sort -%}
 
@@ -54,4 +54,4 @@ layout: default
   {%- endfor %}
 </ul>
 
-<p class="empty" id="entries-empty" hidden>no write-ups match that tag.</p>
+<p class="empty" id="entries-empty" hidden>no posts match that tag.</p>
