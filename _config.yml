@@ -7,7 +7,7 @@ github_user: Khanh1916
 lang: en
 
 url: "https://khanh1916.github.io"
-baseurl: "/writeups"
+baseurl: "/notes"
 
 markdown: kramdown
 kramdown:

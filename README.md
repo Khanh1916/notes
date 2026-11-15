@@ -1,6 +1,6 @@
 # notes
 
-Source for <https://khanh1916.github.io/writeups/>, my personal blog about
+Source for <https://khanh1916.github.io/notes/>, my personal blog about
 technology: projects, labs and notes on how things work. Security walkthroughs
 (CTF machines, labs I built myself) are one part of it.
 
