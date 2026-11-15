@@ -15,6 +15,12 @@
   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5 14 10l-1.4 1.4L8 6.9 3.4 11.4 2 10 8 3.5Z"/></svg>
 </button>
 
+<button type="button" class="toc-fab" id="toc-fab" aria-controls="toc" aria-expanded="false" hidden>
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+  <span>contents</span>
+</button>
+<div class="toc-scrim" id="toc-scrim"></div>
+
 <div class="lightbox" id="lightbox" hidden><img src="" alt=""></div>
 
 <script src="{{ '/assets/js/site.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>

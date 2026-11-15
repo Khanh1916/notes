@@ -50,6 +50,7 @@
   /* --- reading progress --------------------------------------------------- */
   var bar = d.getElementById("progress");
   var top = d.getElementById("to-top");
+  var fab = d.getElementById("toc-fab");
 
   if (bar || top) {
     var tick = function () {
@@ -58,6 +59,7 @@
       var y = h.scrollTop || d.body.scrollTop;
       if (bar) bar.style.width = (max > 0 ? (y / max) * 100 : 0) + "%";
       if (top) top.classList.toggle("show", y > 600);
+      if (fab) fab.classList.toggle("show", y > 240);
     };
     var queued = false;
     window.addEventListener("scroll", function () {
@@ -173,8 +175,23 @@
         return seen;
       };
 
+      /* phones: the contents list opens as a bottom sheet */
+      var scrim = d.getElementById("toc-scrim");
+      var setOpen = function (on) {
+        toc.classList.toggle("open", on);
+        if (scrim) scrim.classList.toggle("show", on);
+        if (fab) fab.setAttribute("aria-expanded", on ? "true" : "false");
+        d.documentElement.classList.toggle("toc-lock", on);
+      };
+      var sync = function () { if (fab) fab.hidden = toc.hidden; if (toc.hidden) setOpen(false); };
+      if (fab) fab.addEventListener("click", function () { setOpen(!toc.classList.contains("open")); });
+      if (scrim) scrim.addEventListener("click", function () { setOpen(false); });
+      toc.addEventListener("click", function (e) { if (e.target.closest("a")) setOpen(false); });
+      d.addEventListener("keydown", function (e) { if (e.key === "Escape") setOpen(false); });
+
       var items = build();
-      d.addEventListener("writeups:langchange", function () { items = build(); });
+      sync();
+      d.addEventListener("writeups:langchange", function () { items = build(); sync(); });
 
       /* highlight the section being read */
       var mark = function () {
