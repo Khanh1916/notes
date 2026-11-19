@@ -197,17 +197,17 @@ At `00401029`, `jne crackme3.401044` skips the `MessageBoxA` call when the condi
 
 ### Objective 2: Neutralizing the Closing Nag with NOPs
 
-Searching for "Closing Nag" lands in the exit procedure around `00401107`. Unlike the opening nag, there is no conditional branch guarding the popup:
+Searching for "Closing Nag" lands in the exit procedure around `0040110D`. Unlike the opening nag, there is no conditional branch guarding the popup:
 
 ```assembly
-00401107 | 6A 00            | push 0
-00401109 | 68 D81A4100      | push crackme3.411AD8      ; "Closing Nag"
-0040110E | 68 E41A4100      | push crackme3.411AE4      ; "I am a nag screen"
-00401113 | 6A 00            | push 0
-00401115 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
+0040110D | 6A 00            | push 0
+0040110F | 68 501B4100      | push crackme3.411B50      ; "Closing Nag"
+00401114 | 68 E41A4100      | push crackme3.411AE4      ; "I am a nag screen\nPlease remove me."
+00401119 | 6A 00            | push 0
+0040111B | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ```
 
-Without a branch to flip, we use NOP padding (`0x90` - No Operation). Highlighting all 15 bytes from `00401107` to `0040111A`, right-click and choose Fill with NOPs:
+Without a branch to flip, we use NOP padding (`0x90` - No Operation). Selecting the instruction range from `00401107` to `00401120` (filled with `90`), right-click and choose Fill with NOPs:
 
 ![Filling the Closing Nag call with NOP instructions]({{ '/images/crackme-reversing/11-crackme3-patch-nops.png' | relative_url }})
 
@@ -218,17 +218,17 @@ The CPU slides through these NOP instructions without executing any popup.
 In the About box handler:
 
 ```assembly
-004010D0 | 74 1A            | je crackme3.4010EC        ; jumps to push "Unregistered"
-004010D2 | 6A 40            | push 40
-004010D4 | 68 D81A4100      | push crackme3.411AD8      ; "About"
-004010D9 | 68 F81A4100      | push crackme3.411AF8      ; "REGISTERED"
+004010D8 | 74 12            | je crackme3.4010EC        ; jumps to push "Unregistered"
+004010DA | 68 101B4100      | push crackme3.411B10      ; "Status:\n\nREGISTERED"
+004010DF | 50               | push eax
+004010E0 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ...
-004010EC | 6A 40            | push 40
-004010EE | 68 D81A4100      | push crackme3.411AD8      ; "About"
-004010F3 | 68 041B4100      | push crackme3.411B04      ; "Unregistered"
+004010EC | 68 241B4100      | push crackme3.411B24      ; "Status:\n\nUnregistered\n\nPlease register me"
+004010F1 | 6A 00            | push 0
+004010F3 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ```
 
-Address `004010D0` contains `je 004010EC`. Changing `je` to `jne` redirects execution directly into the `REGISTERED` string block.
+Address `004010D8` contains `je 004010EC` (`74 12`). Changing `je` to `jne` (`75 12`) redirects execution directly into the `REGISTERED` string block.
 
 Save the patched file: both nag popups are gone, and the About box displays `REGISTERED`:
 
@@ -402,7 +402,7 @@ có file symbol (`.pdb`), và không có tài liệu hướng dẫn. Trong tay c
 và một mục tiêu cụ thể: tìm đúng serial key, gỡ bỏ màn hình nag screen khó chịu, gia hạn
 bản dùng thử đã hết hạn, hoặc viết ra một trình sinh key tự động (Keygen).
 
-Trong bài viết này, ta sẽ cùng mổ xẻ năm bài CrackMe kinh điển dạng Win32 x86 bằng công cụ
+Ta sẽ mổ xẻ năm bài CrackMe kinh điển dạng Win32 x86 bằng công cụ
 `x32dbg`. Mỗi bài đại diện cho một kỹ thuật dịch ngược cốt lõi thường gặp trong phân tích mã độc
 và bảo mật phần mềm.
 
@@ -498,7 +498,7 @@ Hộp thoại ghi rõ "Unregistered Software. Please crack me." và hoàn toàn 
 
 Nạp `CrackMe2.exe` vào `x32dbg`, nhấn `F9` để chạy qua breakpoint hệ thống đến mã nguồn chính của chương trình. Tìm kiếm chuỗi (String References), ta thấy ngay một tên file đáng ngờ: `keyfile.txt`.
 
-![Phân tích điểm gọi keyfile.txt trong x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
+![Nạp CrackMe2.exe vào x32dbg để bắt đầu phân tích]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
 
 Đi tới địa chỉ gọi chuỗi tại `0040103E`, ta thấy rõ quy trình gọi các Win32 API xử lý file:
 
@@ -571,38 +571,38 @@ Tại dòng `00401029`, lệnh `jne crackme3.401044` nhảy cóc qua lệnh gọ
 
 ### Mục tiêu 2: Triệt tiêu Closing Nag bằng NOP
 
-Tìm kiếm chuỗi "Closing Nag" sẽ dẫn ta tới hàm xử lý đóng chương trình quanh địa chỉ `00401107`. Khác với lúc khởi động, tại đây không có bất kỳ lệnh nhảy điều kiện nào để rẽ nhánh; lệnh gọi `MessageBoxA` được thực thi trực tiếp:
+Tìm kiếm chuỗi "Closing Nag" sẽ dẫn ta tới hàm xử lý đóng chương trình quanh địa chỉ `0040110D`. Khác với lúc khởi động, tại đây không có bất kỳ lệnh nhảy điều kiện nào để rẽ nhánh; lệnh gọi `MessageBoxA` được thực thi trực tiếp:
 
 ```assembly
-00401107 | 6A 00            | push 0
-00401109 | 68 D81A4100      | push crackme3.411AD8      ; "Closing Nag"
-0040110E | 68 E41A4100      | push crackme3.411AE4      ; "I am a nag screen"
-00401113 | 6A 00            | push 0
-00401115 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
+0040110D | 6A 00            | push 0
+0040110F | 68 501B4100      | push crackme3.411B50      ; "Closing Nag"
+00401114 | 68 E41A4100      | push crackme3.411AE4      ; "I am a nag screen\nPlease remove me."
+00401119 | 6A 00            | push 0
+0040111B | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ```
 
-Khi không có cờ nhảy để đảo, ta dùng kỹ thuật lấp lệnh bằng NOP (`0x90` - No Operation). Ta bôi đen toàn bộ dải lệnh từ `00401107` đến `0040111A` (tổng cộng 15 bytes), click chuột phải, chọn Fill with NOPs:
+Khi không có cờ nhảy để đảo, ta dùng kỹ thuật lấp lệnh bằng NOP (`0x90` - No Operation). Ta bôi đen dải lệnh từ `00401107` đến `00401120`, click chuột phải, chọn Fill with NOPs:
 
 ![Lấp các lệnh gọi Closing Nag bằng byte NOP]({{ '/images/crackme-reversing/11-crackme3-patch-nops.png' | relative_url }})
 
-Khi gặp 15 byte NOP này, CPU chỉ bỏ qua mà không thực thi bất kỳ thao tác nào, nhờ đó hộp thoại thông báo khi tắt ứng dụng hoàn toàn bị vô hiệu hóa.
+Khi gặp các byte NOP này, CPU chỉ lướt qua mà không thực thi bất kỳ thao tác nào, nhờ đó hộp thoại thông báo khi tắt ứng dụng hoàn toàn bị vô hiệu hóa.
 
 ### Mục tiêu 3: Đổi trạng thái trong About
 
-Trong hàm hiển thị hộp thoại About:
+Trong hàm xử lý hộp thoại About:
 
 ```assembly
-004010D0 | 74 1A            | je crackme3.4010EC        ; nhảy xuống chuỗi "Unregistered"
-004010D2 | 6A 40            | push 40
-004010D4 | 68 D81A4100      | push crackme3.411AD8      ; "About"
-004010D9 | 68 F81A4100      | push crackme3.411AF8      ; "REGISTERED"
+004010D8 | 74 12            | je crackme3.4010EC        ; nhảy xuống chuỗi "Unregistered"
+004010DA | 68 101B4100      | push crackme3.411B10      ; "Status:\n\nREGISTERED"
+004010DF | 50               | push eax
+004010E0 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ...
-004010EC | 6A 40            | push 40
-004010EE | 68 D81A4100      | push crackme3.411AD8      ; "About"
-004010F3 | 68 041B4100      | push crackme3.411B04      ; "Unregistered"
+004010EC | 68 241B4100      | push crackme3.411B24      ; "Status:\n\nUnregistered\n\nPlease register me"
+004010F1 | 6A 00            | push 0
+004010F3 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ```
 
-Tại `004010D0`, lệnh đang là `je 004010EC`. Ta sửa `je` thành `jne`, ép luồng thực thi đi thẳng vào chuỗi `REGISTERED`.
+Tại `004010D8`, câu lệnh đang là `je 004010EC` (`74 12`). Ta đảo lệnh `je` thành `jne` (`75 12`), ép luồng thực thi không nhảy sang nhánh `Unregistered` mà đi thẳng vào khối nạp chuỗi `REGISTERED`.
 
 Lưu file đã vá và mở lại: cả hai màn hình nag biến mất hoàn toàn, mục About hiển thị trạng thái `REGISTERED`:
 
