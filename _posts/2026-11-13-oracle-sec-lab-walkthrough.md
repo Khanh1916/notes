@@ -352,9 +352,9 @@ Each bug has a direct fix, ordered here by how badly it bites.
 OracleSecLab là một fake academy portal ("FPT Student Portal") chạy trên Oracle
 23c Free, PHP 8.3 và Apache. Tôi dựng nó để luyện trên Oracle, vốn khác với các
 lab MySQL, PostgreSQL mà đa số người học quen: cú pháp SQL riêng (`DUAL`, `ROWNUM`,
-`USER_TABLES`), có PL/SQL, và lối inject, liệt kê bảng riêng. Ở đây tôi đánh theo
-kiểu black-box, trong tay chỉ có app đang chạy, rồi tìm ra bốn lỗ hổng nằm lẫn
-giữa nhiều trang bình thường.
+`USER_TABLES`), có PL/SQL, và lối inject, liệt kê bảng riêng. Ở đây tôi tiếp cận
+bài toán theo hướng black-box, chỉ tương tác với ứng dụng đang chạy, từ đó phát
+hiện bốn lỗ hổng nằm xen lẫn giữa các tính năng thông thường.
 
 | # | Lỗ hổng | Ở đâu | OWASP 2021 |
 |---|---|---|---|
@@ -367,22 +367,23 @@ giữa nhiều trang bình thường.
 
 ## Scope and rules of engagement
 
-Phạm vi gói trong một target: `dbs401-oracle-app` ở `http://localhost:8080` và Oracle
-database phía sau. Mọi thứ app phục vụ ra đều được đụng tới, mọi thứ ngoài container thì
-không.
+Phạm vi kiểm thử gói gọn trong một mục tiêu: `dbs401-oracle-app` tại `http://localhost:8080`
+và cơ sở dữ liệu Oracle phía sau. Toàn bộ các endpoint và tính năng do ứng dụng cung cấp
+đều thuộc phạm vi kiểm thử; mọi thành phần ngoài container đều nằm ngoài phạm vi.
 
-Đây là black-box. Tôi không có source, không có thông tin đăng nhập database, chỉ có
-hai tài khoản thường mà người dùng nào cũng có (`student1`, rồi sau là `admin`). Tôi
-làm việc chỉ với app đang chạy, còn lại suy từ cách nó phản ứng.
+Đây là đánh giá black-box: không có mã nguồn, không có thông tin đăng nhập database,
+chỉ khởi đầu với tài khoản người dùng thông thường (`student1`, sau đó mở rộng sang
+`admin`). Mọi phán đoán về cấu trúc bên dưới đều dựa trên phản hồi thực tế của ứng dụng.
 
-Rules of engagement đơn giản vì máy là của tôi và không có ai khác trên đó: nó chạy
-trên máy cá nhân, không phải hệ thống dùng chung hay production, nên kỹ thuật nào cũng
-dùng được, kể cả inject và fuzz, không cần cửa sổ bảo trì hay contact khẩn. Không có
-thao tác phá hoại nào, tôi chỉ đọc và rút dữ liệu ra, không drop bảng hay xóa data.
+Quy tắc phối hợp (Rules of engagement) được xác định rõ ràng: môi trường lab chạy cục bộ
+trên máy cá nhân, không ảnh hưởng đến hệ thống dùng chung hay môi trường production, do
+đó có thể tự do áp dụng các kỹ thuật tấn công từ injection đến fuzzing mà không cần đặt
+khung thời gian bảo trì. Quá trình kiểm thử không thực hiện các hành động phá hoại, chỉ
+trích xuất dữ liệu phục vụ mục đích học tập mà không xóa hay can thiệp vào cấu trúc bảng.
 
 ---
 
-## Tự chạy tái lập
+## Môi trường thực hành
 
 Cả lab gói trong một câu lệnh, không cần cài Oracle:
 
@@ -435,12 +436,13 @@ Gộp lại được vài chỗ đáng chú ý: `search.php` (Student Search), `
 Store) và `course_lookup.php` (Course Info) nằm trên menu; `partner_config.php` và
 param `check_updates` trên `admin.php` thì phải fuzz mới ra.
 
-Giờ xem chỗ nào dễ dính lỗ hổng. Các trang chỉ hiển thị dữ liệu tĩnh như thời khóa biểu hay
-bảng điểm thì bỏ qua. Đáng ngờ là chỗ nhận input rồi đẩy xuống server: Student Search
-(gõ text tự do, dễ ghép thẳng vào câu truy vấn), Material Store (có ô số lượng, dễ lỗi
-logic tính credit), Course Info (tra cứu theo mã, cũng đụng database), và phần update của
-admin (kéo file từ ngoài về, dễ dính lỗi supply-chain). Thử nhanh bằng dấu nháy đơn và vài
-số lạ thì đúng các chỗ này có phản ứng.
+Tiếp theo là bước xác định bề mặt tấn công. Các trang chỉ hiển thị dữ liệu tĩnh như
+thời khóa biểu hay bảng điểm được bỏ qua. Đáng chú ý là các chức năng nhận input từ người
+dùng rồi gửi về server: Student Search (nhập văn bản tự do, dễ dính ghép chuỗi SQL),
+Material Store (nhập số lượng mua, tiềm ẩn lỗi logic tính toán credit), Course Info (tra
+cứu theo mã, cũng truy vấn database), và cơ chế cập nhật của admin (tải file từ máy chủ
+đối tác, dễ phát sinh rủi ro chuỗi cung ứng). Thử nghiệm nhanh với dấu nháy đơn và các
+giá trị biên xác nhận các điểm này đều có phản ứng bất thường.
 
 ---
 
@@ -479,8 +481,9 @@ ngoặc đơn, nên để chiếm câu truy vấn, ta đóng dấu nháy và ngo
 còn lại. Đoạn mở đầu là `KEYWORD%') ... --`.
 
 Thử vài từ khóa thì thấy có một bộ lọc: các từ DDL như `DROP`, `UPDATE` bị chặn,
-còn `UNION SELECT` đi lọt. Bộ lọc này dò theo chuỗi con, nên ngay cả `update_url`
-cũng bị chặn vì có `UPDATE` bên trong. Nhớ chi tiết này cho Challenge 3.
+còn `UNION SELECT` đi lọt. Bộ lọc này kiểm tra chuỗi con (substring matching), nên
+ngay cả tên cột vô hại như `update_url` cũng bị chặn do chứa từ khóa `UPDATE`. Chi
+tiết này sẽ là chìa khóa ở Challenge 3.
 
 `UNION` của Oracle yêu cầu hai vế cùng số cột và cùng kiểu, và mỗi `SELECT` đều cần
 một `FROM` (đó là lúc dùng `DUAL`). Đoán `1,2,3` thì lỗi vì sai kiểu, nên ta đưa
@@ -524,8 +527,8 @@ x%') UNION SELECT 1, config_value, config_key FROM CONFIG_STORE
 
 Giải từng mảnh (hex sang ASCII, đảo chuỗi, base64 sang ASCII) rồi ghép thành một
 flag `DBS401{SQL_..._..._...}`. Trong `CONFIG_STORE` và `FLAGS` còn hai decoy
-base64 nữa để làm tốn thời gian của scanner; giải ra một chuỗi sạch không có nghĩa
-là nó đúng.
+base64 nhằm đánh lạc hướng các công cụ quét tự động; giải mã ra một chuỗi đọc
+được chưa chắc đó đã là flag thật.
 
 ---
 
@@ -551,7 +554,8 @@ flag:
 
 ![Sau khi đặt số lượng âm, credit nhảy lên 1,000,150 và flag mở khóa]({{ '/images/oracle-sec-lab/07-store-flag.jpg' | relative_url }})
 
-Không injection, không công cụ gì, chỉ là một input mà form không lường tới.
+Không cần kỹ thuật injection hay công cụ phức tạp, lỗ hổng xuất phát từ việc logic
+kiểm tra dữ liệu đầu vào chưa bao quát trường hợp số âm.
 
 ---
 
@@ -593,9 +597,9 @@ hex-decode và in ra trang:
 ![Lần kiểm tra cập nhật của admin tải manifest độc hại và để lộ flag supply-chain]({{ '/images/oracle-sec-lab/10-admin-flag.jpg' | relative_url }})
 
 "Update successful! System upgraded to version 9.9.9", flag hiện ra. Một tài khoản
-student không có quyền gì đã khiến dữ liệu của mình chạy trong vùng tin cậy của
-admin. Tấn công supply-chain là vậy: chiếm một thứ mà mục tiêu tin tưởng, rồi để
-chính mục tiêu tải nó về.
+student không có đặc quyền đã điều khiển được luồng thực thi trong vùng tin cậy của
+admin. Bản chất tấn công chuỗi cung ứng (supply-chain) là vậy: thao túng một nguồn tài
+nguyên mà mục tiêu vốn hoàn toàn tin tưởng để mục tiêu tự động nạp về.
 
 ---
 
@@ -619,7 +623,7 @@ Payload hiển nhiên trả về hai dòng, và hàm báo "Ambiguous result" (ch
 zzz' UNION SELECT secret_flag FROM PLSQL_VAULT--
 ```
 
-![UNION ngây thơ trả về hai dòng và lỗi "Ambiguous result"]({{ '/images/oracle-sec-lab/12-course-ambiguous.jpg' | relative_url }})
+![Câu lệnh UNION cơ bản trả về hai dòng và lỗi "Ambiguous result"]({{ '/images/oracle-sec-lab/12-course-ambiguous.jpg' | relative_url }})
 
 Lọc lại còn đúng một dòng thật thì flag hiện ra dưới dạng một tên môn:
 

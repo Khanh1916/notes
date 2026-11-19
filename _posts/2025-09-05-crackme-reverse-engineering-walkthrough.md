@@ -393,7 +393,7 @@ và bảo mật phần mềm.
 
 ---
 
-## Tự chạy tái lập
+## Môi trường thực hành
 
 Bạn có thể tải đúng bộ mẫu CrackMe này về và tự thực hành từng bước trên Windows.
 
@@ -524,7 +524,7 @@ Tại dòng `00401029`, lệnh `jne crackme3.401044` nhảy cóc qua lệnh gọ
 
 ### Mục tiêu 2: Triệt tiêu Closing Nag bằng NOP
 
-Tìm chuỗi "Closing Nag", ta rơi vào hàm đóng chương trình quanh địa chỉ `00401107`. Khác với lúc mở, ở đây không hề có lệnh nhảy điều kiện nào để rẽ nhánh. Lệnh `MessageBoxA` bị ép chạy trực tiếp:
+Tìm kiếm chuỗi "Closing Nag" sẽ dẫn ta tới hàm xử lý đóng chương trình quanh địa chỉ `00401107`. Khác với lúc khởi động, tại đây không có bất kỳ lệnh nhảy điều kiện nào để rẽ nhánh; lệnh gọi `MessageBoxA` được thực thi trực tiếp:
 
 ```assembly
 00401107 | 6A 00            | push 0
@@ -538,7 +538,7 @@ Khi không có cờ nhảy để đảo, ta dùng kỹ thuật lấp lệnh bằ
 
 ![Lấp các lệnh gọi Closing Nag bằng byte NOP]({{ '/images/crackme-reversing/07-crackme3-patch-nops.png' | relative_url }})
 
-Khi chạy qua 15 byte NOP này, CPU sẽ trượt qua mà không thực thi hành động nào, hộp thoại thông báo lúc tắt hoàn toàn biến mất.
+Khi gặp 15 byte NOP này, CPU chỉ bỏ qua mà không thực thi bất kỳ thao tác nào, nhờ đó hộp thoại thông báo khi tắt ứng dụng hoàn toàn bị vô hiệu hóa.
 
 ### Mục tiêu 3: Đổi trạng thái trong About
 
@@ -652,7 +652,7 @@ Xem đoạn code đẩy tham số vào định dạng này quanh địa chỉ `0
 
 ![Đoạn hợp ngữ định dạng serial key bằng wsprintfA]({{ '/images/crackme-reversing/12-crackme5-disasm-date.png' | relative_url }})
 
-Đoạn hợp ngữ vạch trần toàn bộ công thức:
+Đoạn mã hợp ngữ cho thấy rõ công thức tính toán:
 1. Gọi `GetLocalTime` lấy các thành phần ngày tháng: Năm (`wYear`), Tháng (`wMonth`), và Ngày (`wDay`).
 2. Lấy `wYear` cộng thêm giá trị hex `0x4D2` (tương đương 1234 trong hệ thập phân).
    - Với năm 2025: `2025 + 1234 = 3259`.
@@ -696,7 +696,7 @@ Nhập key vừa sinh vào `CrackMe5.exe`, hộp thoại báo thành công hiệ
 
 ## Remediation
 
-Cả năm thử thách trên phơi bày những điểm yếu chí mạng khi bảo vệ phần mềm hoàn toàn ở phía client. Mỗi điểm yếu đều có biện pháp khắc phục chuẩn mực từ góc nhìn của lập trình viên:
+Cả năm thử thách trên cho thấy các điểm yếu cố hữu khi đặt toàn bộ cơ chế bảo vệ ở phía client (máy người dùng). Mỗi điểm yếu đều có biện pháp khắc phục chuẩn mực từ góc nhìn của lập trình viên:
 
 | Điểm yếu trong CrackMe | Cách thức bị khai thác | Cách khắc phục chuẩn mực |
 |---|---|---|
