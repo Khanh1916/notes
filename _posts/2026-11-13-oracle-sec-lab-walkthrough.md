@@ -360,7 +360,7 @@ giữa nhiều trang bình thường.
 |---|---|---|---|
 | 1 | Oracle UNION SQL injection (flag chia mảnh) | `search.php?q=` | A03 Injection |
 | 2 | Lỗi business logic (số lượng âm) | `store.php` | A04 Insecure Design |
-| 3 | Broken access control thành poison supply-chain | `partner_config.php` + `admin.php` | A01 / A06 |
+| 3 | Broken access control thành supply-chain poisoning | `partner_config.php` + `admin.php` | A01 / A06 |
 | 4 | Oracle PL/SQL injection (`EXECUTE IMMEDIATE`) | `course_lookup.php` | A03 Injection |
 
 ---
@@ -435,11 +435,11 @@ Gộp lại được vài chỗ đáng chú ý: `search.php` (Student Search), `
 Store) và `course_lookup.php` (Course Info) nằm trên menu; `partner_config.php` và
 param `check_updates` trên `admin.php` thì phải fuzz mới ra.
 
-Giờ xem chỗ nào dễ dính. Các trang chỉ hiển thị dữ liệu tĩnh như thời khóa biểu hay
+Giờ xem chỗ nào dễ dính lỗ hổng. Các trang chỉ hiển thị dữ liệu tĩnh như thời khóa biểu hay
 bảng điểm thì bỏ qua. Đáng ngờ là chỗ nhận input rồi đẩy xuống server: Student Search
 (gõ text tự do, dễ ghép thẳng vào câu truy vấn), Material Store (có ô số lượng, dễ lỗi
-logic tính tiền), Course Info (tra cứu theo mã, cũng đụng database), và phần update của
-admin (kéo file từ ngoài về, dễ dính supply-chain). Thử nhanh bằng dấu nháy đơn và vài
+logic tính credit), Course Info (tra cứu theo mã, cũng đụng database), và phần update của
+admin (kéo file từ ngoài về, dễ dính lỗi supply-chain). Thử nhanh bằng dấu nháy đơn và vài
 số lạ thì đúng các chỗ này có phản ứng.
 
 ---
@@ -529,15 +529,15 @@ là nó đúng.
 
 ---
 
-## Challenge 2: số lượng âm là tiền free
+## Challenge 2: số lượng âm, nhận credit miễn phí
 
-Material Store (`store.php`) bán một tài liệu ôn thi giá rẻ (100 credit) và một món
+Material Store (`store.php`) bán tài liệu ôn thi giá rẻ (100 credit) và một tài liệu
 bị khóa, "Exam Leak 2024 (CLASSIFIED)", giá 999,999 credit. Tài khoản student của
-ta có 150 credit, không đủ mua món "Exam Leak 2024":
+ta có 150 credit, không đủ mua tài liệu "Exam Leak 2024":
 
-![Store: 150 credit, một món rẻ, và một món khóa giá 999,999 credit]({{ '/images/oracle-sec-lab/06-store-before.jpg' | relative_url }})
+![Store: 150 credit, một tài liệu rẻ, và một tài liệu khóa giá 999,999 credit]({{ '/images/oracle-sec-lab/06-store-before.jpg' | relative_url }})
 
-Form đặt hàng có kiểm tra ta đủ tiền không, nhưng không kiểm tra số lượng có phải
+Form đặt hàng có kiểm tra ta đủ credit không, nhưng không kiểm tra số lượng có phải
 số dương. Đặt số lượng âm thì số dư lại tăng thay vì giảm, tức server đang tính
 cost = qty × price rồi trừ vào credit. Đặt mua −10,000 cuốn tài liệu 100 credit:
 
@@ -546,7 +546,7 @@ cost        = -10,000 * 100          = -1,000,000
 new_credits =    150 - (-1,000,000)  =  1,000,150
 ```
 
-Trừ một số âm chính là cộng vào. Số dư vượt mốc 999,999, món bị khóa mở ra kèm
+Trừ một số âm chính là cộng vào. Số dư vượt mốc 999,999, tài liệu bị khóa mở ra kèm
 flag:
 
 ![Sau khi đặt số lượng âm, credit nhảy lên 1,000,150 và flag mở khóa]({{ '/images/oracle-sec-lab/07-store-flag.jpg' | relative_url }})
@@ -555,11 +555,11 @@ Không injection, không công cụ gì, chỉ là một input mà form không l
 
 ---
 
-## Challenge 3: từ broken access control thành poison supply-chain
+## Challenge 3: từ broken access control thành supply-chain poisoning
 
 Chức năng `check_updates` tìm được ở bước recon đọc một URL manifest đối tác, tải
 JSON đó về, và nếu manifest khai version mới hơn thì xử lý payload. Đổi được URL đó
-là ta bắt được server admin tải đúng file mình muốn.
+là ta khiến server admin tải đúng file ta muốn.
 
 URL này là một dòng config riêng tư, không hiện trên giao diện. Ta đã có SQLi từ
 Challenge 1 nên dump `CONFIG_STORE`. Không gọi được đích danh `update_url` (bộ lọc
@@ -639,7 +639,7 @@ khả năng khai thác nhân với mức ảnh hưởng:
 | Lỗ hổng | Khả năng khai thác | Ảnh hưởng | Mức độ |
 |---|---|---|---|
 | UNION SQL injection | Cao, chỉ một dấu nháy là lọt | Đọc được cả database: dữ liệu sinh viên, config, secret | Nghiêm trọng |
-| Lỗi số lượng âm | Cao, chỉ cần một số âm | Tự tạo credit, mua món bị khóa, gói trong store | Cao |
+| Lỗi số lượng âm | Cao, chỉ cần một số âm | Tự tạo credit, mở khóa tài liệu trong store | Cao |
 | Broken access control + supply-chain | Trung bình, phải ghép SQLi với một trang ẩn | Ép server admin tải và chạy file của attacker | Nghiêm trọng |
 | PL/SQL injection | Cao, inject qua ô tra cứu | Đọc được vault vốn nhìn thì an toàn | Cao |
 
