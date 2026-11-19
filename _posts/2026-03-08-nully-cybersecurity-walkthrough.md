@@ -789,7 +789,7 @@ Thế là ta có root trên database server. Flag cuối về tay. Cả ba serve
 
 ---
 
-## Phòng thủ ra sao
+## Remediation
 
 Mỗi flag ở đây đều đến từ một lỗi cấu hình hoặc một thói quen xấu, và cái nào cũng
 vá được.

@@ -694,11 +694,11 @@ Nhập key vừa sinh vào `CrackMe5.exe`, hộp thoại báo thành công hiệ
 
 ---
 
-## Phòng thủ ra sao
+## Remediation
 
 Cả năm thử thách trên phơi bày những điểm yếu chí mạng khi bảo vệ phần mềm hoàn toàn ở phía client. Mỗi điểm yếu đều có biện pháp khắc phục chuẩn mực từ góc nhìn của lập trình viên:
 
-| Điểm yếu trong CrackMe | Cách thức bị khai thác | Cách phòng thủ chuẩn mực |
+| Điểm yếu trong CrackMe | Cách thức bị khai thác | Cách khắc phục chuẩn mực |
 |---|---|---|
 | Chuỗi cố định để lộ dạng text | Tìm string reference trong debugger | Mã hóa chuỗi nhạy cảm khi biên dịch hoặc dùng stack string; giải mã động trong runtime. |
 | Chỉ kiểm tra qua một lệnh nhảy đơn | Đảo `JNE` thành `JE` chỉ với 1 byte | Kiểm tra tính toàn vẹn của phân vùng code (`.text` hash checksum / chữ ký số); xác thực bản quyền qua server. |
