@@ -126,7 +126,7 @@ The window displays "Unregistered Software. Please crack me." with no input fiel
 
 Loading `CrackMe2.exe` into `x32dbg` and searching String References reveals an immediate clue: `keyfile.txt`.
 
-![Analyzing keyfile string in x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
+![Analyzing keyfile string and CreateFileA in x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
 
 Following the reference to `0040103E` exposes the Win32 file handling sequence:
 
@@ -498,7 +498,7 @@ Hộp thoại ghi rõ "Unregistered Software. Please crack me." và hoàn toàn 
 
 Nạp `CrackMe2.exe` vào `x32dbg`, nhấn `F9` để chạy qua breakpoint hệ thống đến mã nguồn chính của chương trình. Tìm kiếm chuỗi (String References), ta thấy ngay một tên file đáng ngờ: `keyfile.txt`.
 
-![Nạp CrackMe2.exe vào x32dbg để bắt đầu phân tích]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
+![Phân tích hàm kiểm tra keyfile.txt và CreateFileA trong x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
 
 Đi tới địa chỉ gọi chuỗi tại `0040103E`, ta thấy rõ quy trình gọi các Win32 API xử lý file:
 
