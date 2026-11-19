@@ -85,12 +85,12 @@ Double-clicking the line jumps directly to address `00401159` in the disassemble
 ```assembly
 00401137 | 85C0             | test eax, eax
 00401139 | 75 19            | jne crackme1.401154
-0040113B | 68 E81A4100      | push crackme1.411AE8      ; "Well done!"
-00401140 | 68 F41A4100      | push crackme1.411AF4      ; "Cr4cked"
+0040113B | 68 E81A4100      | push crackme1.411AE8      ; "Congrats!"
+00401140 | 68 F41A4100      | push crackme1.411AF4      ; "Well done!"
 00401145 | 50               | push eax
 00401146 | FF15 18D14000    | call dword ptr [<&MessageBoxA>]
 ...
-00401154 | 68 001B4100      | push crackme1.411B00      ; "Cr4cked"
+00401154 | 68 001B4100      | push crackme1.411B00      ; "Sorry"
 00401159 | 68 081B4100      | push crackme1.411B08      ; "Wrong serial key. Try again."
 0040115E | 6A 00            | push 0
 00401160 | FF15 18D14000    | call dword ptr [<&MessageBoxA>]
@@ -161,7 +161,7 @@ Save it with standard ANSI encoding. Relaunching `CrackMe2.exe`:
 
 ![CrackMe 2 successfully registered to user]({{ '/images/crackme-reversing/08-crackme2-registered.png' | relative_url }})
 
-The window title updates immediately to `Registered to: khanh1916`. Challenge solved without modifying binary code.
+The status text in the dialog updates immediately to `Registered to: khanh1916`. Challenge solved without modifying binary code.
 
 ---
 
@@ -260,8 +260,8 @@ Searching for string `%d days trial period remaining` takes us to address `00401
 ```
 
 Look closely at lines `00401036` to `00401042`:
-1. The program calls `GetLocalTime`, storing a `SYSTEMTIME` structure at `004142E0`.
-2. Offset `+0xE` (`004142EE`) is `wDay` (the day of the month). `movzx eax, word ptr [4142EE]` loads this number into `eax`.
+1. The program calls `GetLocalTime`, passing the address of a `SYSTEMTIME` structure at `004142E8`.
+2. Offset `+0x6` (`004142EE`) is `wDay` (the day of the month). `movzx eax, word ptr [4142EE]` loads this number into `eax`.
 3. `mov ecx, 1E` loads hexadecimal `1E` (decimal `30`) into register `ecx`.
 4. `sub ecx, eax` subtracts the current day of the month from 30!
 5. If today is the 3rd, `30 - 3 = 27 days remaining`. If `ecx <= 0`, it jumps to "Trial Period has expired".
@@ -457,12 +457,12 @@ Double-click vào dòng tìm được, debugger sẽ nhảy thẳng đến đị
 ```assembly
 00401137 | 85C0             | test eax, eax
 00401139 | 75 19            | jne crackme1.401154
-0040113B | 68 E81A4100      | push crackme1.411AE8      ; "Well done!"
-00401140 | 68 F41A4100      | push crackme1.411AF4      ; "Cr4cked"
+0040113B | 68 E81A4100      | push crackme1.411AE8      ; "Congrats!"
+00401140 | 68 F41A4100      | push crackme1.411AF4      ; "Well done!"
 00401145 | 50               | push eax
 00401146 | FF15 18D14000    | call dword ptr [<&MessageBoxA>]
 ...
-00401154 | 68 001B4100      | push crackme1.411B00      ; "Cr4cked"
+00401154 | 68 001B4100      | push crackme1.411B00      ; "Sorry"
 00401159 | 68 081B4100      | push crackme1.411B08      ; "Wrong serial key. Try again."
 0040115E | 6A 00            | push 0
 00401160 | FF15 18D14000    | call dword ptr [<&MessageBoxA>]
@@ -533,7 +533,7 @@ Lưu file với định dạng ANSI chuẩn. Khởi chạy lại `CrackMe2.exe`:
 
 ![CrackMe 2 mở khóa thành công với tên người dùng]({{ '/images/crackme-reversing/08-crackme2-registered.png' | relative_url }})
 
-Tiêu đề cửa sổ lập tức đổi thành `Registered to: khanh1916`. Thử thách được giải quyết hoàn toàn mà không cần sửa bất kỳ byte nào trong file thực thi.
+Dòng trạng thái trong hộp thoại lập tức đổi thành `Registered to: khanh1916`. Thử thách được giải quyết hoàn toàn mà không cần sửa bất kỳ byte nào trong file thực thi.
 
 ---
 
@@ -634,8 +634,8 @@ Tìm chuỗi `%d days trial period remaining` dẫn ta đến địa chỉ `0040
 ```
 
 Nhìn kỹ đoạn lệnh từ `00401036` đến `00401042`:
-1. Chương trình gọi hàm `GetLocalTime`, trả về cấu trúc thời gian `SYSTEMTIME` tại vùng nhớ `004142E0`.
-2. Offset `+0xE` (`004142EE`) chính là trường `wDay` (ngày trong tháng). Lệnh `movzx eax, word ptr [4142EE]` nạp con số ngày này vào thanh ghi `eax`.
+1. Chương trình gọi hàm `GetLocalTime`, truyền vào địa chỉ cấu trúc thời gian `SYSTEMTIME` tại `004142E8`.
+2. Offset `+0x6` (`004142EE`) chính là trường `wDay` (ngày trong tháng). Lệnh `movzx eax, word ptr [4142EE]` nạp con số ngày này vào thanh ghi `eax`.
 3. Lệnh `mov ecx, 1E` gán giá trị hex `1E` (tức 30 trong hệ thập phân) vào `ecx`.
 4. Lệnh `sub ecx, eax` lấy 30 trừ đi ngày hiện tại.
 5. Nếu hôm nay là ngày 3, thì `30 - 3 = 27 ngày còn lại`. Nếu `ecx <= 0`, chương trình nhảy sang báo "Trial Period has expired".
