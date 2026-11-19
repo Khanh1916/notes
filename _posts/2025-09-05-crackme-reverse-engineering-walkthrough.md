@@ -116,47 +116,69 @@ Save the patched file via File -> Patch file. Running the patched executable wit
 
 ## Challenge 2: licensing via keyfiles
 
-`CrackMe2.exe` introduces another common licensing scheme: keyfiles. When launched, the program immediately displays a window titled "Unregistered software" with a message: "Please crack me." There is no serial key input field.
+`CrackMe2.exe` introduces another common licensing scheme: keyfiles. When launched without a license file, the application immediately displays an unregistered notice:
 
-Tracing the binary in `x32dbg`, we search for string references again. A filename jumps out: `keyfile.txt`.
+![CrackMe 2 displaying unregistered status window]({{ '/images/crackme-reversing/05-crackme2-unregistered.png' | relative_url }})
 
-![Analyzing the keyfile routine in CrackMe 2]({{ '/images/crackme-reversing/05-crackme2-keyfile.png' | relative_url }})
+The window displays "Unregistered Software. Please crack me." with no input fields on the interface.
 
-### Tracing the File Check
+### Tracing the File Check in x32dbg
 
-The disassembly shows standard Win32 File I/O API calls:
-1. `CreateFileA` with `OPEN_EXISTING` flag, opening `keyfile.txt` in the current working directory.
-2. If `CreateFileA` returns `INVALID_HANDLE_VALUE` (`-1`), the program branches to the "Unregistered" routine.
-3. `ReadFile` attempts to read data from the file into a memory buffer.
+Loading `CrackMe2.exe` into `x32dbg` and searching String References reveals an immediate clue: `keyfile.txt`.
 
-To test this, we create a file named `keyfile.txt` in the same directory as `CrackMe2.exe`. Inside `keyfile.txt`, we write a test string:
+![Analyzing keyfile string in x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
 
-```text
-khanh1916
+Following the reference to `0040103E` exposes the Win32 file handling sequence:
+
+```assembly
+0040103E | 68 281B4100      | push crackme2.411B28      ; "keyfile.txt"
+00401043 | FF15 00D04000    | call dword ptr [<&CreateFileA>]
+00401049 | 8BF0             | mov esi, eax              ; Store returned handle
+0040104B | 83FE FF          | cmp esi, -1               ; Compare against INVALID_HANDLE_VALUE (-1)
+0040104E | 74 51            | je crackme2.4010A1        ; If not found, jump to unregistered branch
+00401050 | 6A 00            | push 0
+00401052 | 68 04434100      | push crackme2.414304
+00401057 | 6A 1F            | push 1F                   ; nNumberOfBytesToRead = 31 bytes
+00401059 | 68 E4424100      | push crackme2.4142E4      ; Output buffer
+0040105E | 56               | push esi                  ; File handle
+0040105F | FF15 08D04000    | call dword ptr [<&ReadFile>]
+...
+0040109B | FF15 04D04000    | call dword ptr [<&CloseHandle>]
 ```
 
-Re-running `CrackMe2.exe`, the title bar changes from "Unregistered" to:
+The validation operates in three stages:
+1. `CreateFileA` attempts to open `keyfile.txt` in the executable's directory with `OPEN_EXISTING`.
+2. If the file is missing, it returns `-1` (`INVALID_HANDLE_VALUE`) and `je crackme2.4010A1` branches to the unregistered dialog.
+3. If present, `ReadFile` reads up to 31 bytes into `004142E4`, closes the handle, and appends the content after `Registered to: `. No signature check or encryption is applied.
 
-```text
-Registered to: khanh1916
-```
+### Creating a Valid Keyfile
 
-The check is complete. The application validates licensing solely through the presence and contents of an external keyfile.
+We create a plain text file named `keyfile.txt` in the same directory as `CrackMe2.exe`. Inside Notepad, enter the desired username:
+
+![Creating keyfile.txt with username in Notepad]({{ '/images/crackme-reversing/07-crackme2-notepad.png' | relative_url }})
+
+Save it with standard ANSI encoding. Relaunching `CrackMe2.exe`:
+
+![CrackMe 2 successfully registered to user]({{ '/images/crackme-reversing/08-crackme2-registered.png' | relative_url }})
+
+The window title updates immediately to `Registered to: khanh1916`. Challenge solved without modifying binary code.
 
 ---
 
 ## Challenge 3: eliminating nag screens and NOP patching
 
-`CrackMe3.exe` demonstrates annoying pop-up screens (nag screens) and an About box showing "Unregistered". The challenge has three distinct objectives:
-1. Remove the opening nag screen ("Opening Nag: I am a nag screen").
+`CrackMe3.exe` demonstrates annoying pop-up screens (nag screens) on launch and exit, along with an About dialog marking the software as unregistered. The challenge has three distinct objectives:
+1. Remove the opening nag screen ("Opening Nag").
 2. Remove the closing nag screen ("Closing Nag").
 3. Make the About dialog display "REGISTERED" instead of "Unregistered".
 
-![Locating the Opening Nag in x32dbg]({{ '/images/crackme-reversing/06-crackme3-opening-nag.png' | relative_url }})
+![CrackMe 3 main interface and nag popups]({{ '/images/crackme-reversing/09-crackme3-nags-composite.png' | relative_url }})
 
 ### Objective 1: Bypassing the Opening Nag
 
-Searching for "Opening Nag" leads to address `0040102D`:
+Searching for "Opening Nag" in `x32dbg` leads to address `0040102D`:
+
+![Locating the Opening Nag in x32dbg]({{ '/images/crackme-reversing/10-crackme3-opening-nag.png' | relative_url }})
 
 ```assembly
 0040101D | 833D A0424100 00 | cmp dword ptr [4142A0], 0
@@ -171,11 +193,11 @@ Searching for "Opening Nag" leads to address `0040102D`:
 00401044 | 56               | push esi
 ```
 
-At `00401029`, `jne crackme3.401044` jumps over the `MessageBoxA` call when the condition is met. We invert this jump by changing `jne` to `je` (`74 19`). Now the program always skips the opening nag screen on startup.
+At `00401029`, `jne crackme3.401044` skips the `MessageBoxA` call when the condition is met. Inverting this jump from `jne` to `je` (`74 19`) ensures the opening nag screen is always skipped on startup.
 
 ### Objective 2: Neutralizing the Closing Nag with NOPs
 
-Searching for "Closing Nag" lands us in the exit procedure around `00401107`. Unlike the opening nag, there is no conditional jump checking a registration flag before calling `MessageBoxA`. The call is executed unconditionally upon closing:
+Searching for "Closing Nag" lands in the exit procedure around `00401107`. Unlike the opening nag, there is no conditional branch guarding the popup:
 
 ```assembly
 00401107 | 6A 00            | push 0
@@ -185,15 +207,15 @@ Searching for "Closing Nag" lands us in the exit procedure around `00401107`. Un
 00401115 | FF15 14D14000    | call dword ptr [<&MessageBoxA>]
 ```
 
-When there is no branch to flip, we use NOP padding (`0x90` - No Operation). We select the entire instruction range from `00401107` to `0040111A` (15 bytes), right-click, and choose Fill with NOPs:
+Without a branch to flip, we use NOP padding (`0x90` - No Operation). Highlighting all 15 bytes from `00401107` to `0040111A`, right-click and choose Fill with NOPs:
 
-![Filling the Closing Nag call with NOP instructions]({{ '/images/crackme-reversing/07-crackme3-patch-nops.png' | relative_url }})
+![Filling the Closing Nag call with NOP instructions]({{ '/images/crackme-reversing/11-crackme3-patch-nops.png' | relative_url }})
 
-The CPU simply slides through these 15 NOP bytes without doing anything, cleanly dropping the exit popup.
+The CPU slides through these NOP instructions without executing any popup.
 
 ### Objective 3: Flipping the About Dialog
 
-In the About box handler, we find:
+In the About box handler:
 
 ```assembly
 004010D0 | 74 1A            | je crackme3.4010EC        ; jumps to push "Unregistered"
@@ -206,11 +228,11 @@ In the About box handler, we find:
 004010F3 | 68 041B4100      | push crackme3.411B04      ; "Unregistered"
 ```
 
-Address `004010D0` contains `je 004010EC`. We change `je` to `jne`, forcing execution to flow straight into the `REGISTERED` string block.
+Address `004010D0` contains `je 004010EC`. Changing `je` to `jne` redirects execution directly into the `REGISTERED` string block.
 
-We patch the file. When running the patched binary, both nag screens vanish, and the About screen proudly displays `REGISTERED`:
+Save the patched file: both nag popups are gone, and the About box displays `REGISTERED`:
 
-![CrackMe 3 successfully patched with REGISTERED status]({{ '/images/crackme-reversing/08-crackme3-registered.png' | relative_url }})
+![CrackMe 3 successfully patched with REGISTERED status]({{ '/images/crackme-reversing/12-crackme3-registered.png' | relative_url }})
 
 ---
 
@@ -218,7 +240,7 @@ We patch the file. When running the patched binary, both nag screens vanish, and
 
 Many commercial applications enforce a 30-day trial period. `CrackMe4.exe` simulates this mechanism. Upon execution, a window appears warning how many days remain in our trial:
 
-![Trial period dialog showing remaining days]({{ '/images/crackme-reversing/09-crackme4-trial-dialog.png' | relative_url }})
+![Trial period dialog showing remaining days]({{ '/images/crackme-reversing/13-crackme4-trial-dialog.png' | relative_url }})
 
 ### Analyzing System Time Logic
 
@@ -244,12 +266,11 @@ Look closely at lines `00401036` to `00401042`:
 4. `sub ecx, eax` subtracts the current day of the month from 30!
 5. If today is the 3rd, `30 - 3 = 27 days remaining`. If `ecx <= 0`, it jumps to "Trial Period has expired".
 
-![Assembly instructions calculating remaining trial days]({{ '/images/crackme-reversing/10-crackme4-ecx-math.png' | relative_url }})
+![Assembly instructions calculating remaining trial days]({{ '/images/crackme-reversing/14-crackme4-ecx-math.png' | relative_url }})
 
 ### Patching the Trial Duration
 
-To extend the trial period, we don't even need to bypass the check. We simply change the baseline limit!
-At address `0040103D`, we change:
+To extend the trial period, we simply increase the baseline limit at address `0040103D`:
 
 ```assembly
 mov ecx, 1E   ; 30 days
@@ -263,7 +284,7 @@ mov ecx, 32   ; 50 in decimal
 
 With `ecx` set to `0x32` (50), `50 - 3 = 47 days remaining`. Patching the file and restarting produces:
 
-![Extended trial period successfully displaying 47 days]({{ '/images/crackme-reversing/11-crackme4-extended-trial.png' | relative_url }})
+![Extended trial period successfully displaying 47 days]({{ '/images/crackme-reversing/15-crackme4-extended-trial.png' | relative_url }})
 
 Trial extended. A single byte change (`1E` -> `32`) altered the application's business logic entirely.
 
@@ -273,7 +294,9 @@ Trial extended. A single byte change (`1E` -> `32`) altered the application's bu
 
 `CrackMe5.exe` elevates the game: the serial key is no longer hardcoded in plaintext. Instead, it is dynamically computed at runtime based on our input username and the current system date.
 
-Entering a test username (`khanh`) and arbitrary serial key triggers the familiar "Wrong serial key. Try again."
+Entering a test username (`khanh`) and arbitrary serial key triggers the rejection message:
+
+![CrackMe 5 rejecting invalid serial key]({{ '/images/crackme-reversing/16-crackme5-wrong-serial.png' | relative_url }})
 
 ### Tracing the Generator Algorithm
 
@@ -301,7 +324,7 @@ Let's inspect the code pushing parameters into this format string around `004011
 00401170 | FF15 0CD14000    | call dword ptr [<&wsprintfA>]
 ```
 
-![Disassembly of CrackMe 5 showing wsprintfA formatting]({{ '/images/crackme-reversing/12-crackme5-disasm-date.png' | relative_url }})
+![Disassembly of CrackMe 5 showing wsprintfA formatting]({{ '/images/crackme-reversing/17-crackme5-disasm-date.png' | relative_url }})
 
 The assembly reveals the exact formula:
 1. It calls `GetLocalTime` to extract the system date components: Year (`wYear`), Month (`wMonth`), and Day (`wDay`).
@@ -341,7 +364,7 @@ if __name__ == "__main__":
 
 Entering the generated key into `CrackMe5.exe` yields immediate success:
 
-![CrackMe 5 solved using algorithmic keygen]({{ '/images/crackme-reversing/13-crackme5-keygen-success.png' | relative_url }})
+![CrackMe 5 solved using algorithmic keygen]({{ '/images/crackme-reversing/18-crackme5-keygen-success.png' | relative_url }})
 
 ---
 
@@ -465,47 +488,71 @@ Lưu file đã vá qua menu File -> Patch file. Chạy thử file đã patch v�
 
 ## Challenge 2: bản quyền qua file giấy phép (Keyfile)
 
-`CrackMe2.exe` đưa ra một mô hình cấp phép quen thuộc khác: dùng file bản quyền riêng biệt. Khi bật ứng dụng, cửa sổ hiển thị tiêu đề "Unregistered software" kèm dòng chữ "Please crack me." Giao diện hoàn toàn không có ô nhập key.
+`CrackMe2.exe` đưa ra một mô hình cấp phép quen thuộc khác: sử dụng file bản quyền riêng biệt (keyfile). Khi khởi chạy ứng dụng mà chưa có file giấy phép, cửa sổ hiển thị thông báo chưa đăng ký:
 
-Mở file trong `x32dbg` và quét String References, ta tìm thấy ngay một tên file đáng ngờ: `keyfile.txt`.
+![CrackMe 2 thông báo phần mềm chưa đăng ký]({{ '/images/crackme-reversing/05-crackme2-unregistered.png' | relative_url }})
 
-![Phân tích đoạn kiểm tra file bản quyền trong CrackMe 2]({{ '/images/crackme-reversing/05-crackme2-keyfile.png' | relative_url }})
+Hộp thoại ghi rõ "Unregistered Software. Please crack me." và hoàn toàn không có ô nhập serial key nào trên giao diện.
 
-### Theo dõi hàm xử lý file
+### Phân tích hàm kiểm tra file trong x32dbg
 
-Mã hợp ngữ thể hiện quy trình gọi Win32 API đọc file:
-1. Gọi `CreateFileA` với cờ `OPEN_EXISTING` để mở file `keyfile.txt` ngay trong thư mục chạy chương trình.
-2. Nếu `CreateFileA` trả về mã lỗi `INVALID_HANDLE_VALUE` (`-1`) do không tìm thấy file, chương trình nhảy sang nhánh "Unregistered".
-3. Nếu mở thành công, lệnh `ReadFile` được gọi để đọc dữ liệu trong file vào bộ đệm.
+Nạp `CrackMe2.exe` vào `x32dbg`, nhấn `F9` để chạy qua breakpoint hệ thống đến mã nguồn chính của chương trình. Tìm kiếm chuỗi (String References), ta thấy ngay một tên file đáng ngờ: `keyfile.txt`.
 
-Để kiểm chứng, ta tạo một file text tên `keyfile.txt` đặt ngay cạnh `CrackMe2.exe`. Bên trong gõ tên bất kỳ:
+![Phân tích điểm gọi keyfile.txt trong x32dbg]({{ '/images/crackme-reversing/06-crackme2-x32dbg.png' | relative_url }})
 
-```text
-khanh1916
+Đi tới địa chỉ gọi chuỗi tại `0040103E`, ta thấy rõ quy trình gọi các Win32 API xử lý file:
+
+```assembly
+0040103E | 68 281B4100      | push crackme2.411B28      ; "keyfile.txt"
+00401043 | FF15 00D04000    | call dword ptr [<&CreateFileA>]
+00401049 | 8BF0             | mov esi, eax              ; Lưu handle trả về
+0040104B | 83FE FF          | cmp esi, -1               ; So sánh với INVALID_HANDLE_VALUE (-1)
+0040104E | 74 51            | je crackme2.4010A1        ; Không tìm thấy file -> nhảy sang nhánh Unregistered
+00401050 | 6A 00            | push 0
+00401052 | 68 04434100      | push crackme2.414304
+00401057 | 6A 1F            | push 1F                   ; nNumberOfBytesToRead = 31 bytes
+00401059 | 68 E4424100      | push crackme2.4142E4      ; Bộ đệm lưu nội dung đọc được
+0040105E | 56               | push esi                  ; Handle của file
+0040105F | FF15 08D04000    | call dword ptr [<&ReadFile>]
+...
+0040109B | FF15 04D04000    | call dword ptr [<&CloseHandle>]
 ```
 
-Bật lại `CrackMe2.exe`, tiêu đề cửa sổ lập tức đổi từ "Unregistered" thành:
+Quy trình kiểm tra diễn ra theo ba bước:
+1. `CreateFileA` cố gắng mở file `keyfile.txt` ngay trong thư mục chứa chương trình.
+2. Nếu file không tồn tại, hàm trả về `-1` (`INVALID_HANDLE_VALUE`), cờ nhảy `je crackme2.4010A1` kích hoạt đưa luồng thực thi xuống nhánh "Unregistered Software".
+3. Nếu file tồn tại, `ReadFile` đọc tối đa 31 byte nội dung vào bộ đệm tại `004142E4`, sau đó đóng file bằng `CloseHandle` và hiển thị chuỗi đọc được sau tiền tố `Registered to: `. Chương trình không hề có thuật toán mã hóa hay kiểm tra chữ ký của file.
 
-```text
-Registered to: khanh1916
-```
+### Tạo file keyfile.txt hợp lệ
 
-Bẻ khóa xong. Ứng dụng này chỉ kiểm tra duy nhất sự tồn tại và nội dung của file giấy phép bên ngoài.
+Biết được quy luật, ta chỉ cần tạo một file văn bản tên `keyfile.txt` nằm cùng thư mục với `CrackMe2.exe`. Mở Notepad, nhập tên người dùng mong muốn:
+
+![Tạo file keyfile.txt chứa tên người dùng bằng Notepad]({{ '/images/crackme-reversing/07-crackme2-notepad.png' | relative_url }})
+
+Lưu file với định dạng ANSI chuẩn. Khởi chạy lại `CrackMe2.exe`:
+
+![CrackMe 2 mở khóa thành công với tên người dùng]({{ '/images/crackme-reversing/08-crackme2-registered.png' | relative_url }})
+
+Tiêu đề cửa sổ lập tức đổi thành `Registered to: khanh1916`. Thử thách được giải quyết hoàn toàn mà không cần sửa bất kỳ byte nào trong file thực thi.
 
 ---
 
 ## Challenge 3: gỡ bỏ nag screen và vá lệnh bằng NOP
 
-`CrackMe3.exe` mô phỏng các phần mềm thường xuyên bật cửa sổ thông báo làm phiền (nag screen) và ô About ghi "Unregistered". Bài này đặt ra ba mục tiêu rõ ràng:
-1. Gỡ màn hình nag lúc mở phần mềm ("Opening Nag: I am a nag screen").
+`CrackMe3.exe` mô phỏng dạng phần mềm thường xuyên hiển thị các cửa sổ làm phiền (nag screen) lúc mở và lúc tắt ứng dụng, đồng thời ô About chỉ ghi trạng thái chưa đăng ký. Thử thách đặt ra ba mục tiêu cần xử lý:
+1. Gỡ màn hình nag lúc mở phần mềm ("Opening Nag").
 2. Gỡ màn hình nag lúc tắt phần mềm ("Closing Nag").
-3. Chuyển dòng thông tin trong hộp About từ "Unregistered" sang "REGISTERED".
+3. Chuyển trạng thái trong hộp About từ "Unregistered" sang "REGISTERED".
 
-![Tìm vị trí Opening Nag trong x32dbg]({{ '/images/crackme-reversing/06-crackme3-opening-nag.png' | relative_url }})
+![Các màn hình nag và hộp thoại About của CrackMe 3]({{ '/images/crackme-reversing/09-crackme3-nags-composite.png' | relative_url }})
 
 ### Mục tiêu 1: Bỏ qua Opening Nag
 
-Tìm chuỗi "Opening Nag" đưa ta đến địa chỉ `0040102D`:
+Mở `CrackMe3.exe` trong `x32dbg`, quét String references và tìm chuỗi "Opening Nag":
+
+![Tìm vị trí Opening Nag trong x32dbg]({{ '/images/crackme-reversing/10-crackme3-opening-nag.png' | relative_url }})
+
+Double-click để nhảy tới địa chỉ `0040102D`:
 
 ```assembly
 0040101D | 833D A0424100 00 | cmp dword ptr [4142A0], 0
@@ -520,7 +567,7 @@ Tìm chuỗi "Opening Nag" đưa ta đến địa chỉ `0040102D`:
 00401044 | 56               | push esi
 ```
 
-Tại dòng `00401029`, lệnh `jne crackme3.401044` nhảy cóc qua lệnh gọi `MessageBoxA` nếu thỏa mãn điều kiện. Ta đảo lệnh này bằng cách sửa `jne` thành `je` (`74 19`). Giờ đây khi khởi động, chương trình sẽ luôn nhảy qua hộp thoại nag đầu tiên.
+Tại dòng `00401029`, lệnh `jne crackme3.401044` nhảy cóc qua lệnh gọi `MessageBoxA` nếu thỏa mãn điều kiện. Ta đảo lệnh này bằng cách sửa `jne` thành `je` (`74 19`). Khi khởi động, chương trình sẽ luôn nhảy qua hộp thoại nag đầu tiên.
 
 ### Mục tiêu 2: Triệt tiêu Closing Nag bằng NOP
 
@@ -536,7 +583,7 @@ Tìm kiếm chuỗi "Closing Nag" sẽ dẫn ta tới hàm xử lý đóng chư�
 
 Khi không có cờ nhảy để đảo, ta dùng kỹ thuật lấp lệnh bằng NOP (`0x90` - No Operation). Ta bôi đen toàn bộ dải lệnh từ `00401107` đến `0040111A` (tổng cộng 15 bytes), click chuột phải, chọn Fill with NOPs:
 
-![Lấp các lệnh gọi Closing Nag bằng byte NOP]({{ '/images/crackme-reversing/07-crackme3-patch-nops.png' | relative_url }})
+![Lấp các lệnh gọi Closing Nag bằng byte NOP]({{ '/images/crackme-reversing/11-crackme3-patch-nops.png' | relative_url }})
 
 Khi gặp 15 byte NOP này, CPU chỉ bỏ qua mà không thực thi bất kỳ thao tác nào, nhờ đó hộp thoại thông báo khi tắt ứng dụng hoàn toàn bị vô hiệu hóa.
 
@@ -557,9 +604,9 @@ Trong hàm hiển thị hộp thoại About:
 
 Tại `004010D0`, lệnh đang là `je 004010EC`. Ta sửa `je` thành `jne`, ép luồng thực thi đi thẳng vào chuỗi `REGISTERED`.
 
-Patch file lại và chạy thử: cả hai nag screen đã biến mất, mục About hiện chữ `REGISTERED`:
+Lưu file đã vá và mở lại: cả hai màn hình nag biến mất hoàn toàn, mục About hiển thị trạng thái `REGISTERED`:
 
-![CrackMe 3 sau khi được patch hoàn chỉnh với trạng thái REGISTERED]({{ '/images/crackme-reversing/08-crackme3-registered.png' | relative_url }})
+![CrackMe 3 sau khi được patch hoàn chỉnh với trạng thái REGISTERED]({{ '/images/crackme-reversing/12-crackme3-registered.png' | relative_url }})
 
 ---
 
@@ -567,7 +614,7 @@ Patch file lại và chạy thử: cả hai nag screen đã biến mất, mục 
 
 Rất nhiều phần mềm thương mại áp dụng chính sách dùng thử 30 ngày. `CrackMe4.exe` tạo dựng lại đúng cơ chế này. Khi mở app, một hộp thoại cảnh báo số ngày dùng thử còn lại:
 
-![Hộp thoại hiển thị số ngày dùng thử còn lại]({{ '/images/crackme-reversing/09-crackme4-trial-dialog.png' | relative_url }})
+![Hộp thoại hiển thị số ngày dùng thử còn lại]({{ '/images/crackme-reversing/13-crackme4-trial-dialog.png' | relative_url }})
 
 ### Phân tích logic đồng hồ hệ thống
 
@@ -593,7 +640,7 @@ Nhìn kỹ đoạn lệnh từ `00401036` đến `00401042`:
 4. Lệnh `sub ecx, eax` lấy 30 trừ đi ngày hiện tại.
 5. Nếu hôm nay là ngày 3, thì `30 - 3 = 27 ngày còn lại`. Nếu `ecx <= 0`, chương trình nhảy sang báo "Trial Period has expired".
 
-![Các lệnh Assembly tính toán số ngày dùng thử]({{ '/images/crackme-reversing/10-crackme4-ecx-math.png' | relative_url }})
+![Các lệnh Assembly tính toán số ngày dùng thử]({{ '/images/crackme-reversing/14-crackme4-ecx-math.png' | relative_url }})
 
 ### Vá mốc thời gian dùng thử
 
@@ -612,7 +659,7 @@ mov ecx, 32   ; 50 ngày (trong hệ thập phân)
 
 Với `ecx` đặt thành `0x32` (50), lấy `50 - 3 = 47 ngày còn lại`. Lưu file patch và mở lại:
 
-![Hạn dùng thử được gia hạn thành công lên 47 ngày]({{ '/images/crackme-reversing/11-crackme4-extended-trial.png' | relative_url }})
+![Hạn dùng thử được gia hạn thành công lên 47 ngày]({{ '/images/crackme-reversing/15-crackme4-extended-trial.png' | relative_url }})
 
 Hạn dùng thử đã được kéo dài. Chỉ một byte duy nhất (`1E` thành `32`) đã làm thay đổi hoàn toàn logic nghiệp vụ của ứng dụng.
 
@@ -622,7 +669,9 @@ Hạn dùng thử đã được kéo dài. Chỉ một byte duy nhất (`1E` th�
 
 `CrackMe5.exe` nâng độ khó lên một mức mới: serial key không còn nằm sẵn dưới dạng văn bản tĩnh trong file, mà được tính toán động ngay lúc chạy dựa trên tên người dùng nhập vào kết hợp với ngày tháng của hệ thống.
 
-Nhập thử tên (`khanh`) và một key ngẫu nhiên, chương trình báo "Wrong serial key. Try again."
+Khởi chạy ứng dụng, nhập thử tên (`khanh`) và một serial ngẫu nhiên, chương trình lập tức từ chối và báo lỗi:
+
+![CrackMe 5 từ chối serial key ngẫu nhiên]({{ '/images/crackme-reversing/16-crackme5-wrong-serial.png' | relative_url }})
 
 ### Bóc tách thuật toán sinh mã
 
@@ -650,7 +699,7 @@ Xem đoạn code đẩy tham số vào định dạng này quanh địa chỉ `0
 00401170 | FF15 0CD14000    | call dword ptr [<&wsprintfA>]
 ```
 
-![Đoạn hợp ngữ định dạng serial key bằng wsprintfA]({{ '/images/crackme-reversing/12-crackme5-disasm-date.png' | relative_url }})
+![Đoạn hợp ngữ định dạng serial key bằng wsprintfA]({{ '/images/crackme-reversing/17-crackme5-disasm-date.png' | relative_url }})
 
 Đoạn mã hợp ngữ cho thấy rõ công thức tính toán:
 1. Gọi `GetLocalTime` lấy các thành phần ngày tháng: Năm (`wYear`), Tháng (`wMonth`), và Ngày (`wDay`).
@@ -690,7 +739,7 @@ if __name__ == "__main__":
 
 Nhập key vừa sinh vào `CrackMe5.exe`, hộp thoại báo thành công hiện lên ngay lập tức:
 
-![Bẻ khóa CrackMe 5 thành công bằng Keygen]({{ '/images/crackme-reversing/13-crackme5-keygen-success.png' | relative_url }})
+![Bẻ khóa CrackMe 5 thành công bằng Keygen]({{ '/images/crackme-reversing/18-crackme5-keygen-success.png' | relative_url }})
 
 ---
 
