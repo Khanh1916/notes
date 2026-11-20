@@ -10,7 +10,13 @@ layout: default
     <span class="intro__title">khanh1916@sec: ~/notes</span>
   </div>
   <div class="intro__body">
-    <p class="intro__cmd">$ <b>whoami</b> &amp;&amp; cat README</p>
+    <div class="intro__meta-row">
+      <p class="intro__cmd">$ <b>whoami</b> &amp;&amp; cat README</p>
+      <div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
+        <button type="button" id="wl-en" class="active" aria-pressed="true" onclick="setWLang('en')">English</button>
+        <button type="button" id="wl-vi" aria-pressed="false" onclick="setWLang('vi')">Tiếng Việt</button>
+      </div>
+    </div>
     <h1>{{ site.tagline | default: site.title }}</h1>
     {{ content }}
   </div>
@@ -18,13 +24,19 @@ layout: default
 
 {%- assign posts = site.posts -%}
 
-<h2 class="section-head">posts &mdash; <b id="entry-count">{{ posts | size }}</b>&nbsp;total</h2>
+<h2 class="section-head">
+  <span class="lang-en">posts &mdash; <b id="entry-count">{{ posts | size }}</b>&nbsp;total</span>
+  <span class="lang-vi">bài viết &mdash; <b>{{ posts | size }}</b>&nbsp;tổng số</span>
+</h2>
 
 {%- assign all_tags = site.tags | sort -%}
 
 {%- if all_tags.size > 1 %}
 <div class="filters" id="filters" role="group" aria-label="Filter by tag">
-  <button type="button" data-tag="*" aria-pressed="true">all</button>
+  <button type="button" data-tag="*" aria-pressed="true">
+    <span class="lang-en">all</span>
+    <span class="lang-vi">tất cả</span>
+  </button>
   {%- for t in all_tags %}
   <button type="button" data-tag="{{ t[0] }}" aria-pressed="false">{{ t[0] }}</button>
   {%- endfor %}
@@ -54,4 +66,7 @@ layout: default
   {%- endfor %}
 </ul>
 
-<p class="empty" id="entries-empty" hidden>no posts match that tag.</p>
+<p class="empty" id="entries-empty" hidden>
+  <span class="lang-en">no posts match that tag.</span>
+  <span class="lang-vi">không có bài viết nào thuộc nhãn này.</span>
+</p>

@@ -221,12 +221,22 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2.5rem 0; }
   line-height: 1.2; margin: 0 0 .7rem; letter-spacing: -.02em;
   color: var(--accent);
 }
+.intro__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-bottom: 1.1rem;
+}
+.intro__meta-row .intro__cmd {
+  margin: 0;
+}
+.intro__meta-row .lang-switch {
+  margin: 0;
+}
 .intro p { margin: 0 0 .85rem; max-width: 62ch; }
 .intro p:last-child { margin-bottom: 0; }
-.intro__sub {
-  font-size: .88rem;
-  color: var(--muted);
-}
 .intro__note {
   font-size: .9rem; color: var(--muted);
   border-left: 2px solid var(--red); padding-left: .85rem;
@@ -365,6 +375,9 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 .lang-vi { display: none; }
 .wlang-vi .lang-en { display: none; }
 .wlang-vi .lang-vi { display: block; }
+span.lang-vi { display: none; }
+.wlang-vi span.lang-en { display: none; }
+.wlang-vi span.lang-vi { display: inline; }
 
 /* --- 7. Prose ------------------------------------------------------------ */
 
