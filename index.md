@@ -12,9 +12,9 @@ Written for people who are learning: technical terms are explained the first tim
 </div>
 
 <div class="lang-vi" markdown="1">
-Tôi viết về những công nghệ mình làm việc hàng ngày: những thứ tôi tự code, những công cụ tôi mày mò và các bài toán tôi lần theo từ câu lệnh đầu tiên cho tới kết quả cuối cùng. Bảo mật là một mảng lớn trong số đó, nên bạn sẽ thấy các bài walkthrough thực chiến nằm cạnh những chủ đề công nghệ khác.
+Nơi tôi lưu lại những ghi chép kỹ thuật trong quá trình làm việc và tự học: từ chuyện lập trình, hệ thống, hạ tầng cho đến dịch ngược và bảo mật phần mềm. Tôi thích tìm hiểu mọi thứ đến tận gốc — xem hệ thống vận hành thế nào từ bên trong, thử nghiệm, tìm lỗi và tự tay dựng lại.
 
-Các bài viết đều hướng đến người đang học: thuật ngữ kỹ thuật luôn được giải thích ngay lần đầu xuất hiện, và chỗ nào làm được, tôi đều để sẵn mục "Môi trường thực hành" để bạn có thể tự tay làm theo.
+Mỗi bài viết ở đây đều theo hướng thực chiến: không lý thuyết suông, thuật ngữ luôn được giải thích rõ ràng ngay từ đầu và có sẵn lab để bạn có thể tự tay làm theo.
 
-<p class="intro__note">Các bài về bảo mật chỉ làm trên lab cá nhân hoặc máy ảo luyện tập công khai. Đừng bao giờ đem các kỹ thuật này thử lên hệ thống bạn không sở hữu hoặc chưa có phép.</p>
+<p class="intro__note">Mọi nội dung bảo mật chỉ phục vụ nghiên cứu và thực hành trên lab cá nhân hoặc môi trường luyện tập công khai. Tuyệt đối không dùng những kỹ thuật này lên hệ thống bạn không sở hữu hoặc chưa được cấp phép.</p>
 </div>
