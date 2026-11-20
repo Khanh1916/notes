@@ -3,12 +3,10 @@ layout: home
 title: Tech notes
 ---
 
-I write about the technology I work with: things I build, tools I try and
-problems I follow from the first command to the result. Security is a big part
-of it, so you will find walkthroughs next to other topics.
+Ghi chép chuyên sâu về **Reverse Engineering**, **Binary Exploitation**, và **An toàn thông tin**. Mỗi bài viết là một hành trình đi từ mã máy, câu lệnh hợp ngữ đầu tiên đến bản chất vấn đề và kỹ thuật khai thác thực tế.
 
-Written for people who are learning: terms are explained the first time they
-appear, and where it helps a post has a "Run it yourself" section so you can
-follow along.
+Tài liệu được biên soạn cho người tự học: giải thích cặn kẽ thuật ngữ ngay khi xuất hiện, luôn đi kèm mục **"Run it yourself" / "Môi trường thực hành"** để bạn đọc có thể tự dựng lab và làm theo.
 
-<p class="intro__note">Security posts only target my own lab or a public training machine. Never point those techniques at a system you do not own or have permission to test.</p>
+<p class="intro__sub">Hands-on technical notes covering reverse engineering, binary exploitation, and cybersecurity labs. Every walkthrough is crafted with step-by-step environments and clear explanations from low-level assembly to proof-of-concept.</p>
+
+<p class="intro__note">Mọi nội dung bảo mật chỉ thực nghiệm trên lab cá nhân hoặc máy luyện tập hợp pháp. Tuyệt đối không áp dụng các kỹ thuật này lên hệ thống bạn không sở hữu hoặc chưa được cấp phép.</p>
