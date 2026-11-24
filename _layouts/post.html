@@ -45,9 +45,9 @@ layout: default
       </div>
 
       {%- if page.bilingual %}
-      <div class="lang-switch" role="group" aria-label="Language / Ngon ngu">
+      <div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
         <button type="button" id="wl-en" class="active" aria-pressed="true" onclick="setWLang('en')">English</button>
-        <button type="button" id="wl-vi" aria-pressed="false" onclick="setWLang('vi')">Ti&#7871;ng Vi&#7879;t</button>
+        <button type="button" id="wl-vi" aria-pressed="false" onclick="setWLang('vi')">Tiếng Việt</button>
       </div>
       {%- endif %}
     </header>
@@ -60,7 +60,7 @@ layout: default
       <p class="byline">
         {%- if page.bilingual %}
         <span class="lang-en">Written by <strong itemprop="author">{{ page.author | default: site.author }}</strong>, <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.</span>
-        <span class="lang-vi">Vi&#7871;t b&#7903;i <strong>Nguy&#7877;n Nam Kh&aacute;nh</strong>, <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.</span>
+        <span class="lang-vi">Viết bởi <strong>Nguyễn Nam Khánh</strong>, <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.</span>
         {%- else %}
         Written by <strong itemprop="author">{{ page.author | default: site.author }}</strong>,
         <a href="https://github.com/{{ site.github_user }}" rel="me noopener">@{{ site.github_user }}</a>.
