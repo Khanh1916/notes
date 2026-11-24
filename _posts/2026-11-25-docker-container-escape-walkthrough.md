@@ -345,7 +345,7 @@ chế độ đọc ghi.
 
 ---
 
-## Tự chạy tái lập
+## Môi trường thực hành
 
 Môi trường thực hành gồm bốn container độc lập, khởi chạy trực tiếp bằng Docker Compose:
 
