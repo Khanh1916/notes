@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "OracleSecLab: a black-box walkthrough of four Oracle web bugs"
-date: 2026-11-13
+date: 2026-10-20
 author: Nguyen Nam Khanh
 tags: [oracle, sql-injection, plsql, business-logic, supply-chain, ctf, walkthrough]
 description: >
